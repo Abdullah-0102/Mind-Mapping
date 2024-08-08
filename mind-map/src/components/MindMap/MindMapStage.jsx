@@ -1,9 +1,9 @@
-import { Stage, Layer,Line } from 'react-konva';
+import { Stage, Layer, Line } from 'react-konva'; // Import Line here
 import RoundedRectangleNode from '../Node/RoundedRectangleNode';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectNodes } from '../../redux/nodesSlice';
-import { selectConnections } from '../../redux/connections/connectionsSlice';
-// import { Transformer } from 'react-konva';
+import { selectNodes, updateNode } from '../../redux/nodesSlice';
+import { selectConnections } from '../../redux/connectionsSlice';
+
 
 const MindMapStage = ({ selectedId, setSelectedId }) => {
   const dispatch = useDispatch();
