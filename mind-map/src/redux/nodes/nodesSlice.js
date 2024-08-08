@@ -1,7 +1,6 @@
-// src/redux/slices/nodeSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 
-const nodeSlice = createSlice({
+const nodesSlice = createSlice({
   name: 'nodes',
   initialState: [],
   reducers: {
@@ -20,5 +19,6 @@ const nodeSlice = createSlice({
   },
 });
 
-export const { addNode, updateNode, deleteNode } = nodeSlice.actions;
-export default nodeSlice.reducer;
+export const { addNode, updateNode, deleteNode } = nodesSlice.actions;
+export const selectNodes = state => state.nodes;
+export default nodesSlice.reducer;

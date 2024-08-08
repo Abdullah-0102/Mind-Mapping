@@ -1,12 +1,11 @@
-// src/redux/store.js
 import { configureStore } from '@reduxjs/toolkit';
-import nodeReducer from './slices/nodeSlice';
-import connectionReducer from './slices/connectionSlice';
+import nodesReducer from './nodesSlice';
+import connectionsReducer from './connectionsSlice';
 
 const store = configureStore({
   reducer: {
-    nodes: nodeReducer,
-    connections: connectionReducer,
+    nodes: nodesReducer,
+    connections: connectionsReducer,
   },
 });
 

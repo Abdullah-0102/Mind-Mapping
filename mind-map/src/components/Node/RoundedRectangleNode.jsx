@@ -1,8 +1,7 @@
-// src/components/nodes/OvalNode.jsx
-import React, { useRef, useEffect } from 'react';
-import { Ellipse, Transformer, Text } from 'react-konva';
+import  { useRef, useEffect } from 'react';
+import { Rect, Transformer, Text } from 'react-konva';
 
-const OvalNode = ({ shapeProps, isSelected, onSelect, onChange }) => {
+const RoundedRectangleNode = ({ shapeProps, isSelected, onSelect, onChange }) => {
   const shapeRef = useRef();
   const trRef = useRef();
 
@@ -15,12 +14,13 @@ const OvalNode = ({ shapeProps, isSelected, onSelect, onChange }) => {
 
   return (
     <>
-      <Ellipse
+      <Rect
         onClick={onSelect}
         onTap={onSelect}
         ref={shapeRef}
         {...shapeProps}
         draggable
+        cornerRadius={10}
         onDragEnd={(e) => {
           onChange({
             ...shapeProps,
@@ -38,18 +38,18 @@ const OvalNode = ({ shapeProps, isSelected, onSelect, onChange }) => {
             ...shapeProps,
             x: node.x(),
             y: node.y(),
-            radiusX: Math.max(30, node.radiusX() * scaleX),
-            radiusY: Math.max(30, node.radiusY() * scaleY),
+            width: Math.max(60, node.width() * scaleX),
+            height: Math.max(30, node.height() * scaleY),
           });
         }}
       />
       <Text
         text={shapeProps.text}
-        x={shapeProps.x - shapeProps.radiusX / 2}
-        y={shapeProps.y - shapeProps.radiusY / 2}
+        x={shapeProps.x + 10}
+        y={shapeProps.y + 10}
         fontSize={16}
         fill="white"
-        width={shapeProps.radiusX}
+        width={shapeProps.width - 20}
         align="center"
         verticalAlign="middle"
       />
@@ -58,7 +58,7 @@ const OvalNode = ({ shapeProps, isSelected, onSelect, onChange }) => {
           ref={trRef}
           flipEnabled={false}
           boundBoxFunc={(oldBox, newBox) => {
-            if (Math.abs(newBox.width) < 30 || Math.abs(newBox.height) < 30) {
+            if (Math.abs(newBox.width) < 60 || Math.abs(newBox.height) < 30) {
               return oldBox;
             }
             return newBox;
@@ -69,4 +69,4 @@ const OvalNode = ({ shapeProps, isSelected, onSelect, onChange }) => {
   );
 };
 
-export default OvalNode;
+export default RoundedRectangleNode;
