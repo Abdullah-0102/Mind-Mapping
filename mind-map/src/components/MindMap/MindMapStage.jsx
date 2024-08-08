@@ -1,4 +1,4 @@
-import { Stage, Layer } from 'react-konva';
+import { Stage, Layer,Line } from 'react-konva';
 import RoundedRectangleNode from '../Node/RoundedRectangleNode';
 import { useDispatch, useSelector } from 'react-redux';
 import { selectNodes } from '../../redux/nodesSlice';
