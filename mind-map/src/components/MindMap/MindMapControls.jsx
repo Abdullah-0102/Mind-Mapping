@@ -1,4 +1,5 @@
 import  { useState } from 'react';
+import PropTypes from 'prop-types'; // Import PropTypes
 import { useDispatch, useSelector } from 'react-redux';
 import { selectNodes, addNode, updateNode, deleteNode } from '../../redux/nodes/nodesSlice';
 import { addConnection, deleteConnectionsForNode } from '../../redux/connections/connectionsSlice';
@@ -100,6 +101,11 @@ const MindMapControls = ({ selectedId }) => {
       )}
     </div>
   );
+};
+
+// Define PropTypes
+MindMapControls.propTypes = {
+  selectedId: PropTypes.string,
 };
 
 export default MindMapControls;

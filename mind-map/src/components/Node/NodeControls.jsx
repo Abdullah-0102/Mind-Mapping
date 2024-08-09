@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types'; // Import PropTypes
 
 const NodeControls = ({ onAddNode, onEditNode, onDeleteNode }) => {
   return (
@@ -7,6 +8,13 @@ const NodeControls = ({ onAddNode, onEditNode, onDeleteNode }) => {
       <button onClick={onDeleteNode}>Delete</button>
     </div>
   );
+};
+
+// Define PropTypes
+NodeControls.propTypes = {
+  onAddNode: PropTypes.func.isRequired,
+  onEditNode: PropTypes.func.isRequired,
+  onDeleteNode: PropTypes.func.isRequired,
 };
 
 export default NodeControls;

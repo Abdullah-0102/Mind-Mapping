@@ -1,4 +1,5 @@
 import  { useRef, useEffect } from 'react';
+import PropTypes from 'prop-types'; // Import PropTypes
 import { Rect, Transformer, Text } from 'react-konva';
 
 const RoundedRectangleNode = ({ shapeProps, isSelected, onSelect, onChange }) => {
@@ -28,7 +29,7 @@ const RoundedRectangleNode = ({ shapeProps, isSelected, onSelect, onChange }) =>
             y: e.target.y(),
           });
         }}
-        onTransformEnd={(e) => {
+        onTransformEnd={() => {
           const node = shapeRef.current;
           const scaleX = node.scaleX();
           const scaleY = node.scaleY();
@@ -67,6 +68,21 @@ const RoundedRectangleNode = ({ shapeProps, isSelected, onSelect, onChange }) =>
       )}
     </>
   );
+};
+
+// Define PropTypes
+RoundedRectangleNode.propTypes = {
+  shapeProps: PropTypes.shape({
+    id: PropTypes.string,
+    x: PropTypes.number,
+    y: PropTypes.number,
+    width: PropTypes.number,
+    height: PropTypes.number,
+    text: PropTypes.string,
+  }).isRequired,
+  isSelected: PropTypes.bool.isRequired,
+  onSelect: PropTypes.func.isRequired,
+  onChange: PropTypes.func.isRequired,
 };
 
 export default RoundedRectangleNode;

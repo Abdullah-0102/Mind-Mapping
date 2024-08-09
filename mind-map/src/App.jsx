@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import MindMapStage from './components/MindMap/MindMapStage';
 import MindMapControls from './components/MindMap/MindMapControls';
 

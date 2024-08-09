@@ -1,9 +1,9 @@
-import { Stage, Layer, Line } from 'react-konva'; // Import Line here
+import PropTypes from 'prop-types'; // Import PropTypes
+import { Stage, Layer, Line } from 'react-konva';
 import RoundedRectangleNode from '../Node/RoundedRectangleNode';
 import { useDispatch, useSelector } from 'react-redux';
-import { selectNodes, updateNode } from '../../redux/nodesSlice';
-import { selectConnections } from '../../redux/connectionsSlice';
-
+import { selectNodes, updateNode } from '../../redux/nodes/nodesSlice';
+import { selectConnections } from '../../redux/connections/connectionsSlice';
 
 const MindMapStage = ({ selectedId, setSelectedId }) => {
   const dispatch = useDispatch();
@@ -107,6 +107,12 @@ const MindMapStage = ({ selectedId, setSelectedId }) => {
       </Layer>
     </Stage>
   );
+};
+
+// Define PropTypes
+MindMapStage.propTypes = {
+  selectedId: PropTypes.string,
+  setSelectedId: PropTypes.func.isRequired,
 };
 
 export default MindMapStage;
