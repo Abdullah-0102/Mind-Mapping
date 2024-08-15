@@ -64,8 +64,7 @@ const App = () => {
       y: newY,
       width: Math.max(100, nodeData.text.length * 10),
       height: 50,
-      fill: "transparent", // Transparent fill for the node
-      stroke: "yellow", // Yellow border color for the node
+      fill: "blue",
       id: newNodeId,
       text: nodeData.text,
       additionalText: nodeData.additionalText,
@@ -150,7 +149,7 @@ const App = () => {
         <React.Fragment key={index}>
           <Line
             points={points}
-            stroke="lightgreen" // Light green color for the connection lines
+            stroke="black"
             strokeWidth={4}
             lineCap="round"
             lineJoin="round"
@@ -167,7 +166,7 @@ const App = () => {
               x={(points[0] + points[points.length - 2]) / 2}
               y={(points[1] + points[points.length - 1]) / 2 - 10}
               fontSize={16}
-              fill="lightgreen" // Match the label color to the line color
+              fill="black"
               align="center"
             />
           )}
@@ -177,15 +176,11 @@ const App = () => {
   };
 
   return (
-    <div
-      className="container mx-auto py-4"
-      style={{ backgroundColor: "black" }}
-    >
-      {" "}
-      {/* Full-page background color */}
-      <h1 className="text-4xl font-bold text-center mb-6 text-white">
+    <div className="container mx-auto py-4">
+      <h1 className="text-4xl font-bold text-center mb-6">
         Mind Map Application
       </h1>
+
       <div className="flex space-x-4 justify-center my-4">
         <button
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow"
@@ -214,6 +209,7 @@ const App = () => {
           Delete Node
         </button>
       </div>
+
       <Stage
         width={window.innerWidth}
         height={window.innerHeight}
@@ -240,6 +236,7 @@ const App = () => {
           {drawConnections()}
         </Layer>
       </Stage>
+
       <CustomModal
         isOpen={modalIsOpen}
         onRequestClose={() => setModalIsOpen(false)}
@@ -331,6 +328,7 @@ const App = () => {
           </p>
         )}
       </CustomModal>
+
       <CustomModal
         isOpen={labelModalIsOpen}
         onRequestClose={() => setLabelModalIsOpen(false)}

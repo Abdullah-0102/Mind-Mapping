@@ -1,6 +1,6 @@
 // src/RoundedRectangleNode.js
-import React from 'react';
-import { Rect, Transformer, Text } from 'react-konva';
+import React from "react";
+import { Rect, Transformer, Text } from "react-konva";
 
 const RoundedRectangleNode = ({
   shapeProps,
@@ -27,10 +27,7 @@ const RoundedRectangleNode = ({
         ref={shapeRef}
         {...shapeProps}
         draggable
-        cornerRadius={shapeProps.width / 2} // Fully rounded corners
-        fill="transparent" // Transparent fill
-        stroke="yellow" // Yellow border color
-        strokeWidth={2} // Border width
+        cornerRadius={10}
         onDragEnd={(e) => {
           onChange({
             ...shapeProps,
@@ -49,7 +46,7 @@ const RoundedRectangleNode = ({
             x: node.x(),
             y: node.y(),
             width: Math.max(60, node.width() * scaleX),
-            height: Math.max(60, node.height() * scaleY), // Ensure height is consistent with rounded shape
+            height: Math.max(30, node.height() * scaleY),
           });
         }}
       />
@@ -60,14 +57,14 @@ const RoundedRectangleNode = ({
         x={shapeProps.x + shapeProps.width / 2 - 10}
         y={shapeProps.y - 20}
         onClick={onAddChild} // Trigger child node creation when the plus icon is clicked
-        style={{ cursor: 'pointer' }}
+        style={{ cursor: "pointer" }}
       />
       <Text
         text={shapeProps.text}
         x={shapeProps.x + 10}
-        y={shapeProps.y + shapeProps.height / 2 - 8} // Center text vertically
+        y={shapeProps.y + 10}
         fontSize={16}
-        fill="grey" // Grey color for text
+        fill="white"
         width={shapeProps.width - 20}
         align="center"
         verticalAlign="middle"
@@ -76,9 +73,9 @@ const RoundedRectangleNode = ({
         <Text
           text={shapeProps.additionalText}
           x={shapeProps.x + 10}
-          y={shapeProps.y + shapeProps.height / 2 + 10} // Place additional text below the main text
+          y={shapeProps.y + 30}
           fontSize={14}
-          fill="grey" // Grey color for additional text
+          fill="white"
           width={shapeProps.width - 20}
           align="center"
           verticalAlign="middle"
@@ -89,7 +86,7 @@ const RoundedRectangleNode = ({
           ref={trRef}
           flipEnabled={false}
           boundBoxFunc={(oldBox, newBox) => {
-            if (Math.abs(newBox.width) < 60 || Math.abs(newBox.height) < 60) {
+            if (Math.abs(newBox.width) < 60 || Math.abs(newBox.height) < 30) {
               return oldBox;
             }
             return newBox;
