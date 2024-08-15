@@ -1,6 +1,6 @@
 // src/RoundedRectangleNode.js
-import React from "react";
-import { Rect, Transformer, Text } from "react-konva";
+import React from 'react';
+import { Rect, Transformer, Text } from 'react-konva';
 
 const RoundedRectangleNode = ({
   shapeProps,
@@ -29,8 +29,8 @@ const RoundedRectangleNode = ({
         draggable
         cornerRadius={shapeProps.width / 2} // Fully rounded corners
         fill="transparent" // Transparent fill
-        stroke="#f1ce15" // Yellow border color
-        strokeWidth={4} // Border width
+        stroke="yellow" // Yellow border color
+        strokeWidth={2} // Border width
         onDragEnd={(e) => {
           onChange({
             ...shapeProps,
@@ -56,11 +56,11 @@ const RoundedRectangleNode = ({
       <Text
         text="+"
         fontSize={18}
-        fill="white" // Black color for the plus icon
+        fill="black" // Black color for the plus icon
         x={shapeProps.x + shapeProps.width / 2 - 10}
         y={shapeProps.y - 20}
         onClick={onAddChild} // Trigger child node creation when the plus icon is clicked
-        style={{ cursor: "pointer" }}
+        style={{ cursor: 'pointer' }}
       />
       <Text
         text={shapeProps.text}
