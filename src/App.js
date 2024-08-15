@@ -29,6 +29,7 @@ const App = () => {
   const [selectedConnection, setSelectedConnection] = React.useState(null);
   const [connectionLabel, setConnectionLabel] = React.useState("");
   const [modalType, setModalType] = React.useState("add");
+  const [parentNodeId, setParentNodeId] = React.useState(null); // To track the parent node ID
 
   const checkDeselect = (e) => {
     const clickedOnEmpty = e.target === e.target.getStage();
@@ -39,7 +40,7 @@ const App = () => {
     }
   };
 
-  const handleAddNode = (parentNodeId = null) => {
+  const handleAddNode = () => {
     const newNodeId = `node${nodes.length + 1}`;
 
     let newX, newY;
@@ -63,7 +64,9 @@ const App = () => {
       y: newY,
       width: Math.max(100, nodeData.text.length * 10),
       height: 50,
-      fill: "blue",
+      fill: "transparent", // Transparent fill for the node
+      stroke: "yellow", // Yellow border color for the node
+      // fill: "blue",
       id: newNodeId,
       text: nodeData.text,
       additionalText: nodeData.additionalText,
@@ -94,6 +97,7 @@ const App = () => {
     selectShape(newNodeId);
     setModalIsOpen(false);
     setNodeData({ text: "", additionalText: "" });
+    setParentNodeId(null); // Reset the parent node ID after creation
   };
 
   const handleEditNode = (nodeId) => {
@@ -147,7 +151,7 @@ const App = () => {
         <React.Fragment key={index}>
           <Line
             points={points}
-            stroke="black"
+            stroke="lightgreen"
             strokeWidth={4}
             lineCap="round"
             lineJoin="round"
@@ -224,7 +228,11 @@ const App = () => {
               onChange={(newAttrs) => {
                 dispatch(updateNode(newAttrs));
               }}
-              onAddChild={() => handleAddNode(node.id)} // Handle adding child node
+              onAddChild={() => {
+                setParentNodeId(node.id); // Set the parent node ID
+                setModalType("add");
+                setModalIsOpen(true); // Open the modal to create the child node
+              }} // Handle adding child node and open modal
             />
           ))}
           {drawConnections()}
@@ -243,7 +251,7 @@ const App = () => {
         }
         onSubmit={
           modalType === "add"
-            ? () => handleAddNode()
+            ? handleAddNode
             : modalType === "edit"
             ? handleUpdateNode
             : handleDeleteNode
