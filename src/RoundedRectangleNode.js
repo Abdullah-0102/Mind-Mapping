@@ -30,7 +30,7 @@ const RoundedRectangleNode = ({
         cornerRadius={shapeProps.width / 2} // Fully rounded corners
         fill="transparent" // Transparent fill
         stroke="#f1ce15" // Yellow border color
-        strokeWidth={3} // Border width
+        strokeWidth={4} // Border width
         onDragEnd={(e) => {
           onChange({
             ...shapeProps,

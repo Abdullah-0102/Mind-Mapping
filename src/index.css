@@ -1,7 +1,11 @@
 /* General styles */
 body {
   font-family: 'Arial', sans-serif;
+<<<<<<< HEAD
   background-color: black;
+=======
+  background-color: #f0f0f0;
+>>>>>>> 9e3a2d37eb0cc23d7fe1c535061afdc9ce13f1ed
   margin: 0;
   padding: 0;
   display: flex;
