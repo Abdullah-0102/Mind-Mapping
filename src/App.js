@@ -5,12 +5,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { addNode, updateNode, deleteNode } from "./slices/nodesSlice";
 import {
   addConnection,
-  updateConnection,
   deleteConnection,
+  updateConnection,
 } from "./slices/connectionsSlice";
 import RoundedRectangleNode from "./RoundedRectangleNode";
 import { getConnectionPoints } from "./utils";
-import CustomModal from "./CustomModal"; // Import the CustomModal component
+import CustomModal from "./CustomModal";
 
 const App = () => {
   const nodes = useSelector((state) => state.nodes);
@@ -29,7 +29,7 @@ const App = () => {
   const [selectedConnection, setSelectedConnection] = React.useState(null);
   const [connectionLabel, setConnectionLabel] = React.useState("");
   const [modalType, setModalType] = React.useState("add");
-  const [parentNodeId, setParentNodeId] = React.useState(null); // To track the parent node ID
+  const [parentNodeId, setParentNodeId] = React.useState(null);
 
   const checkDeselect = (e) => {
     const clickedOnEmpty = e.target === e.target.getStage();
@@ -43,20 +43,22 @@ const App = () => {
   const handleAddNode = () => {
     const newNodeId = `node${nodes.length + 1}`;
 
-    let newX, newY;
+    let newX, newY, nodeColor;
     if (parentNodeId) {
       const parentNode = nodes.find((n) => n.id === parentNodeId);
       newX = parentNode.x;
       newY = parentNode.y + parentNode.height + 50;
-    } else if (nodes.length === 0) {
+
+      const parentNodeIsRoot = nodes[0] && nodes[0].id === parentNodeId;
+      if (parentNodeIsRoot) {
+        nodeColor = "green";
+      } else {
+        nodeColor = "yellow";
+      }
+    } else {
       newX = window.innerWidth / 2 - 50;
       newY = window.innerHeight / 2 - 50;
-    } else {
-      const angle = (Math.PI * 2) / (nodes.length + 1);
-      const distance = 150;
-      const firstNode = nodes[0];
-      newX = firstNode.x + distance * Math.cos(angle * nodes.length);
-      newY = firstNode.y + distance * Math.sin(angle * nodes.length);
+      nodeColor = "blue";
     }
 
     const newNode = {
@@ -64,8 +66,7 @@ const App = () => {
       y: newY,
       width: Math.max(100, nodeData.text.length * 10),
       height: 50,
-      fill: "transparent", // Transparent fill for the node
-      stroke: "yellow", // Yellow border color for the node
+      fill: nodeColor,
       id: newNodeId,
       text: nodeData.text,
       additionalText: nodeData.additionalText,
@@ -96,7 +97,7 @@ const App = () => {
     selectShape(newNodeId);
     setModalIsOpen(false);
     setNodeData({ text: "", additionalText: "" });
-    setParentNodeId(null); // Reset the parent node ID after creation
+    setParentNodeId(null);
   };
 
   const handleEditNode = (nodeId) => {
@@ -115,9 +116,9 @@ const App = () => {
   };
 
   const handleDeleteNode = () => {
-    if (selectedId) {
-      dispatch(deleteNode(selectedId));
-      dispatch(deleteConnection(selectedId));
+    if (editingNodeId) {
+      dispatch(deleteNode(editingNodeId));
+      dispatch(deleteConnection(editingNodeId));
       setModalIsOpen(false);
       selectShape(null);
     }
@@ -137,6 +138,51 @@ const App = () => {
     setConnectionLabel("");
   };
 
+  const handleDragEnd = (draggedNodeId, newX, newY) => {
+    const draggedNode = nodes.find((node) => node.id === draggedNodeId);
+
+    // Check for overlapping node
+    const overlappingNode = nodes.find((node) => {
+      if (node.id === draggedNodeId) return false;
+
+      const isOverlapping =
+        newX + draggedNode.width > node.x &&
+        newX < node.x + node.width &&
+        newY + draggedNode.height > node.y &&
+        newY < node.y + node.height;
+
+      return isOverlapping;
+    });
+
+    if (overlappingNode) {
+      // If an overlap is detected, make the dragged node a child of the overlapping node
+      const childColor = overlappingNode.fill === "blue" ? "green" : "yellow";
+
+      const updatedNode = {
+        ...draggedNode,
+        x: overlappingNode.x,
+        y: overlappingNode.y + overlappingNode.height + 50,
+        fill: childColor,
+      };
+
+      dispatch(updateNode(updatedNode));
+
+      // Update connections
+      dispatch(deleteConnection(draggedNode.id)); // Remove old connections
+      dispatch(
+        addConnection({
+          from: overlappingNode.id,
+          to: draggedNode.id,
+          type: lineType,
+          label: "",
+        })
+      );
+    } else {
+      // Update node's position if no overlap
+      dispatch(updateNode({ ...draggedNode, x: newX, y: newY }));
+    }
+  };
+
   const drawConnections = () => {
     return connections.map((connection, index) => {
       const fromNode = nodes.find((node) => node.id === connection.from);
@@ -150,7 +196,7 @@ const App = () => {
         <React.Fragment key={index}>
           <Line
             points={points}
-            stroke="lightgreen" // Light green color for the connection lines
+            stroke="black"
             strokeWidth={4}
             lineCap="round"
             lineJoin="round"
@@ -167,7 +213,7 @@ const App = () => {
               x={(points[0] + points[points.length - 2]) / 2}
               y={(points[1] + points[points.length - 1]) / 2 - 10}
               fontSize={16}
-              fill="lightgreen" // Match the label color to the line color
+              fill="black"
               align="center"
             />
           )}
@@ -177,15 +223,11 @@ const App = () => {
   };
 
   return (
-    <div
-      className="container mx-auto py-4"
-      style={{ backgroundColor: "black" }}
-    >
-      {" "}
-      {/* Full-page background color */}
-      <h1 className="text-4xl font-bold text-center mb-6 text-white">
+    <div className="container mx-auto py-4">
+      <h1 className="text-4xl font-bold text-center mb-6">
         Mind Map Application
       </h1>
+
       <div className="flex space-x-4 justify-center my-4">
         <button
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow"
@@ -214,6 +256,7 @@ const App = () => {
           Delete Node
         </button>
       </div>
+
       <Stage
         width={window.innerWidth}
         height={window.innerHeight}
@@ -226,20 +269,20 @@ const App = () => {
               key={i}
               shapeProps={node}
               isSelected={node.id === selectedId}
-              onSelect={() => handleEditNode(node.id)} // Open modal to edit node on click
-              onChange={(newAttrs) => {
-                dispatch(updateNode(newAttrs));
-              }}
+              onSelect={() => handleEditNode(node.id)}
+              onChange={(newAttrs) => dispatch(updateNode(newAttrs))}
               onAddChild={() => {
-                setParentNodeId(node.id); // Set the parent node ID
+                setParentNodeId(node.id);
                 setModalType("add");
-                setModalIsOpen(true); // Open the modal to create the child node
-              }} // Handle adding child node and open modal
+                setModalIsOpen(true);
+              }}
+              onDragEnd={(newX, newY) => handleDragEnd(node.id, newX, newY)} // Handle drag end
             />
           ))}
           {drawConnections()}
         </Layer>
       </Stage>
+
       <CustomModal
         isOpen={modalIsOpen}
         onRequestClose={() => setModalIsOpen(false)}
@@ -323,6 +366,13 @@ const App = () => {
                 <option>Rounded Line</option>
               </select>
             </div>
+            <button
+              className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow"
+              type="button"
+              onClick={handleDeleteNode}
+            >
+              Delete Node
+            </button>
           </>
         )}
         {modalType === "delete" && (
@@ -331,6 +381,7 @@ const App = () => {
           </p>
         )}
       </CustomModal>
+
       <CustomModal
         isOpen={labelModalIsOpen}
         onRequestClose={() => setLabelModalIsOpen(false)}
