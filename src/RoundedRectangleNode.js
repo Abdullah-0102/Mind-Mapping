@@ -8,6 +8,7 @@ const RoundedRectangleNode = ({
   onSelect,
   onChange,
   onAddChild,
+  onDragEnd,
 }) => {
   const shapeRef = React.useRef();
   const trRef = React.useRef();
@@ -19,6 +20,9 @@ const RoundedRectangleNode = ({
     }
   }, [isSelected]);
 
+  // Determine the text color based on the node's fill color
+  const textColor = shapeProps.fill === "yellow" ? "black" : "white";
+
   return (
     <React.Fragment>
       <Rect
@@ -29,11 +33,9 @@ const RoundedRectangleNode = ({
         draggable
         cornerRadius={10}
         onDragEnd={(e) => {
-          onChange({
-            ...shapeProps,
-            x: e.target.x(),
-            y: e.target.y(),
-          });
+          const newX = e.target.x();
+          const newY = e.target.y();
+          onDragEnd(newX, newY); // Call the onDragEnd handler with new coordinates
         }}
         onTransformEnd={(e) => {
           const node = shapeRef.current;
@@ -53,10 +55,10 @@ const RoundedRectangleNode = ({
       <Text
         text="+"
         fontSize={18}
-        fill="black" // Black color for the plus icon
+        fill="black"
         x={shapeProps.x + shapeProps.width / 2 - 10}
         y={shapeProps.y - 20}
-        onClick={onAddChild} // Trigger child node creation when the plus icon is clicked
+        onClick={onAddChild}
         style={{ cursor: "pointer" }}
       />
       <Text
@@ -64,7 +66,7 @@ const RoundedRectangleNode = ({
         x={shapeProps.x + 10}
         y={shapeProps.y + 10}
         fontSize={16}
-        fill="white"
+        fill={textColor}
         width={shapeProps.width - 20}
         align="center"
         verticalAlign="middle"
@@ -75,7 +77,7 @@ const RoundedRectangleNode = ({
           x={shapeProps.x + 10}
           y={shapeProps.y + 30}
           fontSize={14}
-          fill="white"
+          fill={textColor}
           width={shapeProps.width - 20}
           align="center"
           verticalAlign="middle"

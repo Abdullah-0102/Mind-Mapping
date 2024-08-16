@@ -16,13 +16,13 @@ const connectionsSlice = createSlice({
           conn.from === action.payload.from && conn.to === action.payload.to
       );
       if (index !== -1) {
-        state[index] = action.payload; // Updates an existing connection
+        state[index] = { ...state[index], ...action.payload }; // Updates an existing connection
       }
     },
     deleteConnection: (state, action) => {
       return state.filter(
         (conn) => conn.from !== action.payload && conn.to !== action.payload
-      ); // Removes a connection
+      ); // Removes connections related to the deleted node
     },
   },
 });
