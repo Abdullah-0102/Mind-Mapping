@@ -31,6 +31,7 @@ const App = () => {
   const [modalType, setModalType] = React.useState("add");
   const [parentNodeId, setParentNodeId] = React.useState(null); // To track the parent node ID
 
+   const stageRef = React.useRef(null);
   const checkDeselect = (e) => {
     const clickedOnEmpty = e.target === e.target.getStage();
     if (clickedOnEmpty) {
@@ -38,6 +39,30 @@ const App = () => {
       setEditingNodeId(null);
       setSelectedConnection(null);
     }
+  };
+  const handleZoom = (e) => {
+    e.evt.preventDefault();
+    const stage = stageRef.current;
+    const scaleBy = 1.05;
+    const oldScale = stage.scaleX();
+    const pointer = stage.getPointerPosition();
+
+    const mousePointTo = {
+      x: (pointer.x - stage.x()) / oldScale,
+      y: (pointer.y - stage.y()) / oldScale,
+    };
+
+    let newScale = e.evt.deltaY > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+    newScale = Math.max(0.5, Math.min(2, newScale)); // Limit zoom scale between 0.5 and 2
+
+    stage.scale({ x: newScale, y: newScale });
+
+    const newPos = {
+      x: pointer.x - mousePointTo.x * newScale,
+      y: pointer.y - mousePointTo.y * newScale,
+    };
+    stage.position(newPos);
+    stage.batchDraw();
   };
 
   const handleAddNode = () => {
@@ -121,6 +146,10 @@ const App = () => {
       selectShape(null);
     }
   };
+   const handleNodeSelect = (nodeId) => {
+    selectShape(nodeId);
+    setEditingNodeId(null);
+  };
 
   const handleSaveLabel = () => {
     dispatch(
@@ -150,7 +179,7 @@ const App = () => {
           <Line
             points={points}
             stroke="black"
-            strokeWidth={4}
+            strokeWidth={6}
             lineCap="round"
             lineJoin="round"
             tension={connection.type === "Curved Line" ? 0.5 : 0}
@@ -215,6 +244,8 @@ const App = () => {
         height={window.innerHeight}
         onMouseDown={checkDeselect}
         onTouchStart={checkDeselect}
+        ref={stageRef}
+        onWheel={handleZoom} 
       >
         <Layer>
           {nodes.map((node, i) => (
@@ -222,7 +253,8 @@ const App = () => {
               key={i}
               shapeProps={node}
               isSelected={node.id === selectedId}
-              onSelect={() => handleEditNode(node.id)} // Open modal to edit node on click
+              onSelect={() => handleNodeSelect(node.id)}
+              // onSelect={() => handleEditNode(node.id)} // Open modal to edit node on click
               onChange={(newAttrs) => {
                 dispatch(updateNode(newAttrs));
               }}

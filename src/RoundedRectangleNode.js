@@ -28,6 +28,9 @@ const RoundedRectangleNode = ({
         {...shapeProps}
         draggable
         cornerRadius={10}
+        fill={isSelected ? "blue" : shapeProps.fill}
+        stroke={isSelected ? "blue" : null}
+        strokeWidth={isSelected ? 2 : 0}
         onDragEnd={(e) => {
           onChange({
             ...shapeProps,
@@ -53,10 +56,13 @@ const RoundedRectangleNode = ({
       <Text
         text="+"
         fontSize={18}
-        fill="black" // Black color for the plus icon
+        fill="black"
         x={shapeProps.x + shapeProps.width / 2 - 10}
-        y={shapeProps.y - 20}
-        onClick={onAddChild} // Trigger child node creation when the plus icon is clicked
+        y={shapeProps.y - 30}
+        onClick={(e) => {
+          e.cancelBubble = true; // Prevent event from bubbling up and deselecting node
+          onAddChild(); // Trigger child node creation when the plus icon is clicked
+        }}
         style={{ cursor: "pointer" }}
       />
       <Text

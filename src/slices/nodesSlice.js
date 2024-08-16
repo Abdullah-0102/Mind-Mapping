@@ -1,4 +1,3 @@
-// src/slices/nodesSlice.js
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = [];
@@ -13,7 +12,8 @@ const nodesSlice = createSlice({
     updateNode: (state, action) => {
       const index = state.findIndex((node) => node.id === action.payload.id);
       if (index !== -1) {
-        state[index] = action.payload; // Updates an existing node
+        // Spread the existing node's properties and overwrite with the new ones
+        state[index] = { ...state[index], ...action.payload };
       }
     },
     deleteNode: (state, action) => {
