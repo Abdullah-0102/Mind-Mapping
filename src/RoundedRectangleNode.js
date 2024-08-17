@@ -1,6 +1,7 @@
 // src/RoundedRectangleNode.js
 import React from "react";
-import { Rect, Transformer, Text } from "react-konva";
+import { Group, Rect, Circle, Text, Transformer, Image } from "react-konva";
+import useImage from 'use-image';
 
 const RoundedRectangleNode = ({
   shapeProps,
@@ -9,9 +10,14 @@ const RoundedRectangleNode = ({
   onChange,
   onAddChild,
   onDragEnd,
+  onEdit,
+  onDelete
 }) => {
   const shapeRef = React.useRef();
   const trRef = React.useRef();
+  const [addImage] = useImage('/add.png'); 
+  const [deleteImage] = useImage('/delete (1).png');
+  const [editImage] = useImage('/write.png');
 
   React.useEffect(() => {
     if (isSelected) {
@@ -20,18 +26,24 @@ const RoundedRectangleNode = ({
     }
   }, [isSelected]);
 
-  // Determine the text color based on the node's fill color
-  const textColor = shapeProps.fill === "yellow" ? "black" : "white";
+  // Define bluish-grey color for text
+  const textColor = "#0E2038"; // Bluish-grey text color
+
+  // Define grey color for node
+  const nodeColor = "#E8E8E8"; // Grey color for the node
+
+  const radius = shapeProps.height / 2;
+  const rectWidth = shapeProps.width - 2 * radius;
 
   return (
     <React.Fragment>
-      <Rect
+      <Group
         onClick={onSelect}
         onTap={onSelect}
         ref={shapeRef}
-        {...shapeProps}
         draggable
-        cornerRadius={10}
+        x={shapeProps.x}
+        y={shapeProps.y}
         onDragEnd={(e) => {
           const newX = e.target.x();
           const newY = e.target.y();
@@ -51,38 +63,97 @@ const RoundedRectangleNode = ({
             height: Math.max(30, node.height() * scaleY),
           });
         }}
-      />
-      <Text
-        text="+"
-        fontSize={18}
-        fill="black"
-        x={shapeProps.x + shapeProps.width / 2 - 10}
-        y={shapeProps.y - 20}
-        onClick={onAddChild}
-        style={{ cursor: "pointer" }}
-      />
-      <Text
-        text={shapeProps.text}
-        x={shapeProps.x + 10}
-        y={shapeProps.y + 10}
-        fontSize={16}
-        fill={textColor}
-        width={shapeProps.width - 20}
-        align="center"
-        verticalAlign="middle"
-      />
-      {shapeProps.additionalText && (
+      >
+        {/* Left Circle */}
+        <Circle
+          x={radius}
+          y={radius}
+          radius={radius}
+          fill={nodeColor}
+        />
+        
+        {/* Right Circle */}
+        <Circle
+          x={rectWidth + radius}
+          y={radius}
+          radius={radius}
+          fill={nodeColor}
+        />
+        
+        {/* Rectangle */}
+        <Rect
+          x={radius}
+          y={0}
+          width={rectWidth}
+          height={shapeProps.height}
+          fill={nodeColor}
+        />
+        
+        {/* Main Text */}
         <Text
-          text={shapeProps.additionalText}
-          x={shapeProps.x + 10}
-          y={shapeProps.y + 30}
-          fontSize={14}
+          text={shapeProps.text}
+          x={10}
+          y={10}
+          fontSize={16}
           fill={textColor}
           width={shapeProps.width - 20}
           align="center"
           verticalAlign="middle"
+          fontFamily="Arial"
+          fontStyle="bold"
         />
-      )}
+
+        {/* Additional Text */}
+        {shapeProps.additionalText && (
+          <Text
+            text={shapeProps.additionalText}
+            x={10}
+            y={30}
+            fontSize={14}
+            fill={textColor}
+            width={shapeProps.width - 20}
+            align="center"
+            verticalAlign="middle"
+            fontFamily="Arial"
+            fontStyle="bold"
+          />
+        )}
+      </Group>
+      
+      {/* "+" Icon for Adding Child Node - Top-Right Corner */}
+      <Image
+        image={addImage}
+        x={shapeProps.x + shapeProps.width - 28} // Position at the top-right corner
+        y={shapeProps.y - 28} // Position above the node
+        width={18} // Smaller size
+        height={18} // Smaller size
+        onClick={onAddChild}
+        style={{ cursor: "pointer" }}
+      />
+
+      {/* "Edit" Icon - Top-Left Corner */}
+      <Image
+        image={editImage}
+        x={shapeProps.x - 5} // Position at the top-left corner
+        y={shapeProps.y - 24} // Position above the node
+        width={18} // Smaller size
+        height={18} // Smaller size
+        onClick={onEdit}
+        style={{ cursor: "pointer" }}
+      />
+
+      {/* "Delete" Icon - Bottom-Left Corner */}
+      <Image
+        image={deleteImage}
+        x={shapeProps.x - 10} // Position at the bottom-left corner
+        y={shapeProps.y + shapeProps.height - 2} // Position below the node
+        width={16} // Smaller size
+        height={16} // Smaller size
+        onClick={onDelete}
+        style={{ cursor: "pointer" }}
+      />
+
+      {/* Transformer for Resizing */}
       {isSelected && (
         <Transformer
           ref={trRef}
