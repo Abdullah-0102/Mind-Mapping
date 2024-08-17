@@ -158,6 +158,9 @@
       setLabelModalIsOpen(false);
       setConnectionLabel("");
     };
+    const handleSelectNode = (nodeId) => {
+      selectShape(nodeId);
+    };
 
     const handleDeleteLabel = () => {
       dispatch(updateConnection({ ...selectedConnection, label: "" }));
@@ -300,7 +303,9 @@
                 key={i}
                 shapeProps={node}
                 isSelected={node.id === selectedId}
-                onSelect={() => handleEditNode(node.id)}
+                onSelect={() => handleSelectNode(node.id)}
+
+                // onSelect={() => handleEditNode(node.id)}
                 onChange={(newAttrs) => dispatch(updateNode(newAttrs))}
                 onAddChild={() => {
                   setParentNodeId(node.id);

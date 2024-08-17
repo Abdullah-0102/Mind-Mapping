@@ -1,5 +1,5 @@
 // src/RoundedRectangleNode.js
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Group, Rect, Circle, Text, Transformer, Image } from "react-konva";
 import useImage from 'use-image';
 
@@ -13,16 +13,20 @@ const RoundedRectangleNode = ({
   onEdit,
   onDelete
 }) => {
-  const shapeRef = React.useRef();
-  const trRef = React.useRef();
+  const shapeRef = useRef();
+  const trRef = useRef();
   const [addImage] = useImage('/add.png'); 
   const [deleteImage] = useImage('/delete (1).png');
   const [editImage] = useImage('/write.png');
+  const [showIcons, setShowIcons] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isSelected) {
       trRef.current.nodes([shapeRef.current]);
       trRef.current.getLayer().batchDraw();
+      setShowIcons(true); // Show icons when selected
+    } else {
+      setShowIcons(false); // Hide icons when not selected
     }
   }, [isSelected]);
 
@@ -121,37 +125,43 @@ const RoundedRectangleNode = ({
       </Group>
       
       {/* "+" Icon for Adding Child Node - Top-Right Corner */}
-      <Image
-        image={addImage}
-        x={shapeProps.x + shapeProps.width - 28} // Position at the top-right corner
-        y={shapeProps.y - 28} // Position above the node
-        width={18} // Smaller size
-        height={18} // Smaller size
-        onClick={onAddChild}
-        style={{ cursor: "pointer" }}
-      />
+      {showIcons && (
+        <Image
+          image={addImage}
+          x={shapeProps.x + shapeProps.width - 28} // Position at the top-right corner
+          y={shapeProps.y - 28} // Position above the node
+          width={18} // Smaller size
+          height={18} // Smaller size
+          onClick={onAddChild}
+          style={{ cursor: "pointer" }}
+        />
+      )}
 
       {/* "Edit" Icon - Top-Left Corner */}
-      <Image
-        image={editImage}
-        x={shapeProps.x - 5} // Position at the top-left corner
-        y={shapeProps.y - 24} // Position above the node
-        width={18} // Smaller size
-        height={18} // Smaller size
-        onClick={onEdit}
-        style={{ cursor: "pointer" }}
-      />
+      {showIcons && (
+        <Image
+          image={editImage}
+          x={shapeProps.x - 28} // Position at the top-left corner
+          y={shapeProps.y - 28} // Position above the node
+          width={18} // Smaller size
+          height={18} // Smaller size
+          onClick={onEdit}
+          style={{ cursor: "pointer" }}
+        />
+      )}
 
       {/* "Delete" Icon - Bottom-Left Corner */}
-      <Image
-        image={deleteImage}
-        x={shapeProps.x - 10} // Position at the bottom-left corner
-        y={shapeProps.y + shapeProps.height - 2} // Position below the node
-        width={16} // Smaller size
-        height={16} // Smaller size
-        onClick={onDelete}
-        style={{ cursor: "pointer" }}
-      />
+      {showIcons && (
+        <Image
+          image={deleteImage}
+          x={shapeProps.x - 28} // Position at the bottom-left corner
+          y={shapeProps.y + shapeProps.height - 28} // Position below the node
+          width={18} // Smaller size
+          height={18} // Smaller size
+          onClick={onDelete}
+          style={{ cursor: "pointer" }}
+        />
+      )}
 
       {/* Transformer for Resizing */}
       {isSelected && (
