@@ -66,16 +66,17 @@
       stage.batchDraw();
     };
 
-
     const handleAddNode = () => {
       const newNodeId = `node${nodes.length + 1}`;
-
+    
       let newX, newY, nodeColor;
+      
+      // Calculate new position
       if (parentNodeId) {
         const parentNode = nodes.find((n) => n.id === parentNodeId);
-        newX = parentNode.x;
-        newY = parentNode.y + parentNode.height + 50;
-
+        newX = parentNode.x + (Math.random() - 0.5) * 200; // Randomly offset x position
+        newY = parentNode.y + parentNode.height + 50 + Math.random() * 50; // Offset y position
+    
         const parentNodeIsRoot = nodes[0] && nodes[0].id === parentNodeId;
         if (parentNodeIsRoot) {
           nodeColor = "green";
@@ -83,11 +84,12 @@
           nodeColor = "yellow";
         }
       } else {
-        newX = window.innerWidth / 2 - 50;
-        newY = window.innerHeight / 2 - 50;
+        // Place the new node in a random position within the canvas bounds
+        newX = Math.random() * (window.innerWidth - 200) + 100;
+        newY = Math.random() * (window.innerHeight - 200) + 100;
         nodeColor = "blue";
       }
-
+    
       const newNode = {
         x: newX,
         y: newY,
@@ -98,9 +100,9 @@
         text: nodeData.text,
         additionalText: nodeData.additionalText,
       };
-
+    
       dispatch(addNode(newNode));
-
+    
       if (parentNodeId) {
         dispatch(
           addConnection({
@@ -120,12 +122,13 @@
           })
         );
       }
-
+    
       selectShape(newNodeId);
       setModalIsOpen(false);
       setNodeData({ text: "", additionalText: "" });
       setParentNodeId(null);
     };
+    
 
     const handleEditNode = (nodeId) => {
       const node = nodes.find((n) => n.id === nodeId);
@@ -170,34 +173,37 @@
 
     const handleDragEnd = (draggedNodeId, newX, newY) => {
       const draggedNode = nodes.find((node) => node.id === draggedNodeId);
-
+    
       // Check for overlapping node
       const overlappingNode = nodes.find((node) => {
         if (node.id === draggedNodeId) return false;
-
+    
         const isOverlapping =
           newX + draggedNode.width > node.x &&
           newX < node.x + node.width &&
           newY + draggedNode.height > node.y &&
           newY < node.y + node.height;
-
+    
         return isOverlapping;
       });
-
+    
       if (overlappingNode) {
-        // If an overlap is detected, make the dragged node a child of the overlapping node
-        const childColor = overlappingNode.fill === "blue" ? "green" : "yellow";
-
+        // If an overlap is detected, adjust the position to avoid overlap
+        const offsetX = Math.random() > 0.5 ? draggedNode.width + 20 : -(draggedNode.width + 20);
+        const offsetY = Math.random() > 0.5 ? draggedNode.height + 20 : -(draggedNode.height + 20);
+        
+        const adjustedX = overlappingNode.x + offsetX;
+        const adjustedY = overlappingNode.y + offsetY;
+    
         const updatedNode = {
           ...draggedNode,
-          x: overlappingNode.x,
-          y: overlappingNode.y + overlappingNode.height + 50,
-          fill: childColor,
+          x: adjustedX,
+          y: adjustedY,
         };
-
+    
         dispatch(updateNode(updatedNode));
-
-        // Update connections
+    
+        // Update connections if needed
         dispatch(deleteConnection(draggedNode.id)); // Remove old connections
         dispatch(
           addConnection({
@@ -212,6 +218,8 @@
         dispatch(updateNode({ ...draggedNode, x: newX, y: newY }));
       }
     };
+    
+    
 
     const drawConnections = () => {
       return connections.map((connection, index) => {
@@ -231,7 +239,7 @@
     lineCap="round"
     lineJoin="round"
     tension={connection.type === "Curved Line" ? 0.5 : 0}
-    onClick={() => {
+    onDblClick={() => {
       setSelectedConnection(connection);
       setConnectionLabel(connection.label || "");
       setLabelModalIsOpen(true);
@@ -246,6 +254,8 @@
                 fontSize={16}
                 fill="black"
                 align="center"
+                 fontFamily="Arial"
+          fontStyle="bold"
               />
             )}
           </React.Fragment>
