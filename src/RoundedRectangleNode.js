@@ -1,4 +1,3 @@
-// src/RoundedRectangleNode.js
 import React, { useState, useEffect, useRef } from "react";
 import { Group, Rect, Circle, Text, Transformer, Image } from "react-konva";
 import useImage from 'use-image';
@@ -59,12 +58,14 @@ const RoundedRectangleNode = ({
           const scaleY = node.scaleY();
           node.scaleX(1);
           node.scaleY(1);
+          const newWidth = Math.max(60, shapeProps.width * scaleX);
+          const newHeight = Math.max(30, shapeProps.height * scaleY);
           onChange({
             ...shapeProps,
             x: node.x(),
             y: node.y(),
-            width: Math.max(60, node.width() * scaleX),
-            height: Math.max(30, node.height() * scaleY),
+            width: newWidth,
+            height: newHeight,
           });
         }}
       >
