@@ -262,11 +262,11 @@ const App = () => {
     return connections.map((connection, index) => {
       const fromNode = nodes.find((node) => node.id === connection.from);
       const toNode = nodes.find((node) => node.id === connection.to);
-
+  
       if (!fromNode || !toNode) return null;
-
+  
       const points = getConnectionPoints(fromNode, toNode, connection.type);
-
+  
       return (
         <React.Fragment key={index}>
           <Line
@@ -277,6 +277,11 @@ const App = () => {
             lineJoin="round"
             tension={connection.type === "Curved Line" ? 0.5 : 0}
             onClick={() => setSelectedConnection(connection)}
+            onDblClick={() => {
+              setSelectedConnection(connection);
+              setConnectionLabel(connection.label || "");
+              setLabelModalIsOpen(true);
+            }}
           />
           {connection.label && (
             <Text
@@ -290,11 +295,11 @@ const App = () => {
               fontStyle="bold"
             />
           )}
-
+  
           {selectedConnection === connection && (
             <Circle
-              x={(points[0] + points[2]) / 2}
-              y={(points[1] + points[3]) / 2}
+              x={points[0]} // x-coordinate of the start of the line
+              y={points[1]} // y-coordinate of the start of the line
               radius={8}
               fill="black"
               draggable
@@ -307,6 +312,7 @@ const App = () => {
       );
     });
   };
+  
 
   return (
     <div className="container mx-auto py-4">
