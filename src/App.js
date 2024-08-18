@@ -151,11 +151,16 @@ const App = () => {
 
   const handleSaveLabel = () => {
     dispatch(
-      updateConnection({ ...selectedConnection, label: connectionLabel })
+      updateConnection({
+        ...selectedConnection,
+        label: connectionLabel,
+        type: lineType, // Update the connection type
+      })
     );
     setLabelModalIsOpen(false);
     setConnectionLabel("");
   };
+  
 
   const handleSelectNode = (nodeId) => {
     selectShape(nodeId);
@@ -280,6 +285,7 @@ const App = () => {
             onDblClick={() => {
               setSelectedConnection(connection);
               setConnectionLabel(connection.label || "");
+              setLineType(connection.type); // Set the current type in the modal
               setLabelModalIsOpen(true);
             }}
           />
@@ -476,38 +482,58 @@ const App = () => {
       </CustomModal>
 
       <CustomModal
-        isOpen={labelModalIsOpen}
-        onRequestClose={() => setLabelModalIsOpen(false)}
-        title="Add/Update Label to Connection"
-        onSubmit={handleSaveLabel}
-        submitLabel="Save"
-      >
-        <div className="mb-4">
-          <label
-            className="block text-gray-700 text-sm font-bold mb-2"
-            htmlFor="label"
-          >
-            Connection Label
-          </label>
-          <input
-            id="label"
-            type="text"
-            value={connectionLabel}
-            onChange={(e) => setConnectionLabel(e.target.value)}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-            placeholder="Enter connection label"
-          />
-        </div>
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={handleDeleteLabel}
-            className="ml-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow"
-          >
-            Delete Label
-          </button>
-        </div>
-      </CustomModal>
+  isOpen={labelModalIsOpen}
+  onRequestClose={() => setLabelModalIsOpen(false)}
+  title="Add/Update Label to Connection"
+  onSubmit={handleSaveLabel}
+  submitLabel="Save"
+>
+  <div className="mb-4">
+    <label
+      className="block text-gray-700 text-sm font-bold mb-2"
+      htmlFor="label"
+    >
+      Connection Label
+    </label>
+    <input
+      id="label"
+      type="text"
+      value={connectionLabel}
+      onChange={(e) => setConnectionLabel(e.target.value)}
+      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+      placeholder="Enter connection label"
+    />
+  </div>
+  <div className="mb-4">
+    <label
+      className="block text-gray-700 text-sm font-bold mb-2"
+      htmlFor="lineType"
+    >
+      Connection Line Type
+    </label>
+    <select
+      id="lineType"
+      value={lineType}
+      onChange={(e) => setLineType(e.target.value)}
+      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+    >
+      <option value="Straight Line">Straight Line</option>
+      <option value="Curved Line">Curved Line</option>
+      <option value="Angled Line">Angled Line</option>
+      <option value="Rounded Line">Rounded Line</option>
+    </select>
+  </div>
+  <div className="flex justify-end">
+    <button
+      type="button"
+      onClick={handleDeleteLabel}
+      className="ml-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow"
+    >
+      Delete Label
+    </button>
+  </div>
+</CustomModal>
+
     </div>
   );
 };
