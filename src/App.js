@@ -1,12 +1,13 @@
 // src/App.js
-import React from "react";
+import React,{useState} from "react";
 import { Stage, Layer, Line, Circle, Text } from "react-konva";
 import { useDispatch, useSelector } from "react-redux";
-import { addNode, updateNode, deleteNode } from "./slices/nodesSlice";
+import { addNode, updateNode, deleteNode,setNodes } from "./slices/nodesSlice";
 import {
   addConnection,
   deleteConnection,
   updateConnection,
+  setConnections
 } from "./slices/connectionsSlice";
 import { useRef } from "react";
 import RoundedRectangleNode from "./RoundedRectangleNode";
@@ -18,6 +19,10 @@ const App = () => {
   const connections = useSelector((state) => state.connections);
   const dispatch = useDispatch();
   const stageRef = useRef(null);
+
+    // Undo/Redo history states
+    const [history, setHistory] = useState([]);
+    const [historyIndex, setHistoryIndex] = useState(-1);
 
   const [selectedId, selectShape] = React.useState(null);
   const [modalIsOpen, setModalIsOpen] = React.useState(false);
@@ -33,6 +38,64 @@ const App = () => {
   const [modalType, setModalType] = React.useState("add");
   const [parentNodeId, setParentNodeId] = React.useState(null);
   const [draggingNode, setDraggingNode] = React.useState(null);
+
+  const saveToHistory = (nodesToSave = nodes, connectionsToSave = connections) => {
+    const currentState = {
+        nodes: [...nodesToSave],
+        connections: [...connectionsToSave],
+    };
+
+    const newHistory = history.slice(0, historyIndex + 1); // Trim history to current index
+    newHistory.push(currentState);
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1); // Set index to the last element
+
+    console.log('History after save:', newHistory);
+    console.log('Current History Index after save:', historyIndex);
+};
+
+const handleUndo = () => {
+    if (historyIndex > 0) {
+        const previousState = history[historyIndex - 1];
+        setHistoryIndex(historyIndex - 1);
+        dispatch(setNodes(previousState.nodes));
+        dispatch(setConnections(previousState.connections));
+
+        console.log('Undo performed');
+        console.log('History Index after undo:', historyIndex);
+        console.log('Restored Nodes:', previousState.nodes);
+        console.log('Restored Connections:', previousState.connections);
+    }
+};
+
+const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+        const nextState = history[historyIndex + 1];
+        setHistoryIndex(historyIndex + 1);
+        dispatch(setNodes(nextState.nodes));
+        dispatch(setConnections(nextState.connections));
+
+        console.log('Redo performed');
+        console.log('History Index after redo:', historyIndex);
+        console.log('Restored Nodes:', nextState.nodes);
+        console.log('Restored Connections:', nextState.connections);
+    } else {
+        console.log('Redo not possible - history index out of bounds');
+    }
+};
+
+  
+  
+  
+
+  // Ensure saveToHistory is called whenever there is a change that should be recorded
+  React.useEffect(() => {
+    // Prevent saving to history if only the nodes/connections are empty
+    if (nodes.length > 0 || connections.length > 0) {
+      saveToHistory();
+    }
+  }, [nodes, connections]);
+
 
   const checkDeselect = (e) => {
     const clickedOnEmpty = e.target === e.target.getStage();
@@ -69,6 +132,7 @@ const App = () => {
   };
 
   const handleAddNode = () => {
+   
     const newNodeId = `node${nodes.length + 1}`;
 
     let newX, newY, nodeColor;
@@ -119,6 +183,7 @@ const App = () => {
       );
     }
 
+    saveToHistory();
     selectShape(newNodeId);
     setModalIsOpen(false);
     setNodeData({ text: "", additionalText: "" });
@@ -126,6 +191,7 @@ const App = () => {
   };
 
   const handleEditNode = (nodeId) => {
+    
     const node = nodes.find((n) => n.id === nodeId);
     setNodeData({ text: node.text, additionalText: node.additionalText || "" });
     setEditingNodeId(nodeId);
@@ -134,16 +200,21 @@ const App = () => {
   };
 
   const handleUpdateNode = () => {
+   
     dispatch(updateNode({ ...nodeData, id: editingNodeId }));
+    saveToHistory();
     setModalIsOpen(false);
     setNodeData({ text: "", additionalText: "" });
     setEditingNodeId(null);
+    
   };
 
   const handleDeleteNode = () => {
     if (editingNodeId) {
+      
       dispatch(deleteNode(editingNodeId));
       dispatch(deleteConnection(editingNodeId));
+      saveToHistory();
       setModalIsOpen(false);
       selectShape(null);
     }
@@ -172,7 +243,21 @@ const App = () => {
     setConnectionLabel("");
   };
 
+  const debounce = (func, delay) => {
+    let timeoutId;
+    return (...args) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            func(...args);
+        }, delay);
+    };
+};
+
+const debouncedSaveToHistory = debounce(() => saveToHistory(), 300);
+
+
   const handleDragEnd = (draggedNodeId, newX, newY) => {
+   
     const draggedNode = nodes.find((node) => node.id === draggedNodeId);
 
     const overlappingNode = nodes.find((node) => {
@@ -220,6 +305,7 @@ const App = () => {
     } else {
       dispatch(updateNode({ ...draggedNode, x: newX, y: newY }));
     }
+    debouncedSaveToHistory()
   };
 
   const handleDotDragEnd = (connection, newX, newY) => {
@@ -318,6 +404,16 @@ const App = () => {
       );
     });
   };
+
+  //reset
+  const resetMindMap = () => {
+    // Reset nodes and connections to empty arrays
+    dispatch(setNodes([]));
+    dispatch(setConnections([]));
+    setHistory([])
+    setHistoryIndex(-1)
+  };
+  
   
 
   return (
@@ -330,13 +426,14 @@ const App = () => {
         <button
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow"
           onClick={() => {
+            resetMindMap()
             setModalType("add");
             setModalIsOpen(true);
           }}
         >
-          Add Node
+          Create Mind Map
         </button>
-        <button
+        {/* <button
           className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded shadow"
           onClick={() => handleEditNode(selectedId)}
           disabled={!selectedId}
@@ -352,6 +449,20 @@ const App = () => {
           disabled={!selectedId}
         >
           Delete Node
+        </button> */}
+        <button
+          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow"
+          onClick={handleUndo}
+          disabled={historyIndex <= 0}
+        >
+          Undo
+        </button>
+        <button
+          className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded shadow"
+          onClick={handleRedo}
+          disabled={historyIndex >= history.length - 1}
+        >
+          Redo
         </button>
       </div>
 

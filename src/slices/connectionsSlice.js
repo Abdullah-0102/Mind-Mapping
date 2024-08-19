@@ -1,4 +1,3 @@
-// src/slices/connectionsSlice.js
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = [];
@@ -8,7 +7,7 @@ const connectionsSlice = createSlice({
   initialState,
   reducers: {
     addConnection: (state, action) => {
-      state.push(action.payload); // Adds a new connection
+      state.push(action.payload);
     },
     updateConnection: (state, action) => {
       const index = state.findIndex(
@@ -16,17 +15,19 @@ const connectionsSlice = createSlice({
           conn.from === action.payload.from && conn.to === action.payload.to
       );
       if (index !== -1) {
-        state[index] = { ...state[index], ...action.payload }; // Updates an existing connection
+        state[index] = { ...state[index], ...action.payload };
       }
     },
     deleteConnection: (state, action) => {
       return state.filter(
         (conn) => conn.from !== action.payload && conn.to !== action.payload
-      ); // Removes connections related to the deleted node
+      );
+    },
+    setConnections: (state, action) => {
+      return action.payload; // Directly sets the connections state
     },
   },
 });
 
-export const { addConnection, updateConnection, deleteConnection } =
-  connectionsSlice.actions;
+export const { addConnection, updateConnection, deleteConnection, setConnections } = connectionsSlice.actions;
 export default connectionsSlice.reducer;
