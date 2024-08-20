@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Group, Rect, Circle, Text, Transformer, Image } from "react-konva";
-import useImage from 'use-image';
+import useImage from "use-image";
 
 const RoundedRectangleNode = ({
   shapeProps,
@@ -10,13 +10,13 @@ const RoundedRectangleNode = ({
   onAddChild,
   onDragEnd,
   onEdit,
-  onDelete
+  onDelete,
 }) => {
   const shapeRef = useRef();
   const trRef = useRef();
-  const [addImage] = useImage('/add.png'); 
-  const [deleteImage] = useImage('/delete (1).png');
-  const [editImage] = useImage('/write.png');
+  const [addImage] = useImage("/add.png");
+  const [deleteImage] = useImage("/delete (1).png");
+  const [editImage] = useImage("/write.png");
   const [showIcons, setShowIcons] = useState(false);
 
   useEffect(() => {
@@ -70,13 +70,8 @@ const RoundedRectangleNode = ({
         }}
       >
         {/* Left Circle */}
-        <Circle
-          x={radius}
-          y={radius}
-          radius={radius}
-          fill={nodeColor}
-        />
-        
+        <Circle x={radius} y={radius} radius={radius} fill={nodeColor} />
+
         {/* Right Circle */}
         <Circle
           x={rectWidth + radius}
@@ -84,7 +79,7 @@ const RoundedRectangleNode = ({
           radius={radius}
           fill={nodeColor}
         />
-        
+
         {/* Rectangle */}
         <Rect
           x={radius}
@@ -93,7 +88,7 @@ const RoundedRectangleNode = ({
           height={shapeProps.height}
           fill={nodeColor}
         />
-        
+
         {/* Main Text */}
         <Text
           text={shapeProps.text}
@@ -124,7 +119,7 @@ const RoundedRectangleNode = ({
           />
         )}
       </Group>
-      
+
       {/* "+" Icon for Adding Child Node - Top-Right Corner */}
       {showIcons && (
         <Image
