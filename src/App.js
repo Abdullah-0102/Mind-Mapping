@@ -1,5 +1,5 @@
 // src/App.js
-import React,{useState} from "react";
+import React,{useState,useEffect} from "react";
 import { Stage, Layer, Line, Circle, Text } from "react-konva";
 import { useDispatch, useSelector } from "react-redux";
 import { addNode, updateNode, deleteNode,setNodes } from "./slices/nodesSlice";
@@ -38,7 +38,30 @@ const App = () => {
   const [modalType, setModalType] = React.useState("add");
   const [parentNodeId, setParentNodeId] = React.useState(null);
   const [draggingNode, setDraggingNode] = React.useState(null);
+  
+  const [controlPoints, setControlPoints] = useState({});
 
+  // Initialize control points for each connection
+  useEffect(() => {
+    const initialPoints = connections.reduce((acc, connection) => {
+      const fromNode = nodes.find((node) => node.id === connection.from);
+      const toNode = nodes.find((node) => node.id === connection.to);
+  
+      if (!fromNode || !toNode) return acc;
+  
+      acc[connection.id] = {
+        controlPoint1: { x: (fromNode.x + toNode.x) / 2, y: fromNode.y - 50 },
+        controlPoint2: { x: (fromNode.x + toNode.x) / 2, y: toNode.y + 50 },
+      };
+  
+      return acc;
+    }, {});
+  
+    setControlPoints(initialPoints);
+  }, [connections, nodes]);
+  
+  
+  
   const saveToHistory = (nodesToSave = nodes, connectionsToSave = connections) => {
     const currentState = {
         nodes: [...nodesToSave],
@@ -349,6 +372,114 @@ const debouncedSaveToHistory = debounce(() => saveToHistory(), 300);
     }
   };
 
+ 
+ const DraggableLine = ({ connection, fromNode, toNode, controlPoints, setControlPoints }) => {
+    const handleDragEnd1 = (e) => {
+      const newControlPoint1 = { x: e.target.x(), y: e.target.y() };
+      setControlPoints((prevPoints) => ({
+        ...prevPoints,
+        [connection.id]: {
+          ...prevPoints[connection.id],
+          controlPoint1: newControlPoint1,
+        },
+      }));
+    };
+  
+    const handleDragEnd2 = (e) => {
+      const newControlPoint2 = { x: e.target.x(), y: e.target.y() };
+      setControlPoints((prevPoints) => ({
+        ...prevPoints,
+        [connection.id]: {
+          ...prevPoints[connection.id],
+          controlPoint2: newControlPoint2,
+        },
+      }));
+    };
+  
+    const getPointsForLineType = () => {
+      const { controlPoint1, controlPoint2 } = controlPoints[connection.id] || {};
+  
+      switch (connection.type) {
+        case "Straight Line":
+          return [fromNode.x, fromNode.y, toNode.x, toNode.y];
+        case "Curved Line":
+        case "Rounded Line":
+          return [
+            fromNode.x, fromNode.y,
+            controlPoint1.x, controlPoint1.y,
+            controlPoint2.x, controlPoint2.y,
+            toNode.x, toNode.y,
+          ];
+        case "Angled Line":
+          const middleX = fromNode.x + (toNode.x - fromNode.x) / 2;
+          return [
+            fromNode.x, fromNode.y,
+            middleX, fromNode.y,
+            middleX, toNode.y,
+            toNode.x, toNode.y,
+          ];
+        default:
+          return [];
+      }
+    };
+  
+    const points = getPointsForLineType();
+  
+    return (
+      <React.Fragment>
+        <Line
+          points={points}
+          stroke="rgba(128, 128, 128, 0.5)"
+          strokeWidth={8}
+          lineCap="round"
+          lineJoin="round"
+          tension={connection.type === "Curved Line" ? 0.5 : 0}
+          onClick={() => setSelectedConnection(connection)}
+          onDblClick={() => {
+            setSelectedConnection(connection);
+            setConnectionLabel(connection.label || "");
+            setLineType(connection.type);
+            setLabelModalIsOpen(true);
+          }}
+        />
+        {connection.label && (
+          <Text
+            text={connection.label}
+            x={(points[0] + points[points.length - 2]) / 2}
+            y={(points[1] + points[points.length - 1]) / 2 - 10}
+            fontSize={16}
+            fill="black"
+            align="center"
+            fontFamily="Arial"
+            fontStyle="bold"
+          />
+        )}
+  
+        {["Curved Line", "Rounded Line", "Angled Line"].includes(connection.type) && (
+          <React.Fragment>
+            <Circle
+              x={controlPoints[connection.id].controlPoint1.x}
+              y={controlPoints[connection.id].controlPoint1.y}
+              radius={8}
+              fill="blue"
+              draggable
+              onDragEnd={handleDragEnd1}
+            />
+            <Circle
+              x={controlPoints[connection.id].controlPoint2.x}
+              y={controlPoints[connection.id].controlPoint2.y}
+              radius={8}
+              fill="red"
+              draggable
+              onDragEnd={handleDragEnd2}
+            />
+          </React.Fragment>
+        )}
+      </React.Fragment>
+    );
+  }
+  
+  
   const drawConnections = () => {
     return connections.map((connection, index) => {
       const fromNode = nodes.find((node) => node.id === connection.from);
@@ -356,54 +487,22 @@ const debouncedSaveToHistory = debounce(() => saveToHistory(), 300);
   
       if (!fromNode || !toNode) return null;
   
-      const points = getConnectionPoints(fromNode, toNode, connection.type);
-  
       return (
-        <React.Fragment key={index}>
-          <Line
-            points={points}
-            stroke="rgba(128, 128, 128, 0.5)" // Grey color with 50% transparency
-            strokeWidth={8}
-            lineCap="round"
-            lineJoin="round"
-            tension={connection.type === "Curved Line" ? 0.5 : 0}
-            onClick={() => setSelectedConnection(connection)}
-            onDblClick={() => {
-              setSelectedConnection(connection);
-              setConnectionLabel(connection.label || "");
-              setLineType(connection.type); // Set the current type in the modal
-              setLabelModalIsOpen(true);
-            }}
-          />
-          {connection.label && (
-            <Text
-              text={connection.label}
-              x={(points[0] + points[points.length - 2]) / 2}
-              y={(points[1] + points[points.length - 1]) / 2 - 10}
-              fontSize={16}
-              fill="black"
-              align="center"
-              fontFamily="Arial"
-              fontStyle="bold"
-            />
-          )}
-  
-          {selectedConnection === connection && (
-            <Circle
-              x={points[0]} // x-coordinate of the start of the line
-              y={points[1]} // y-coordinate of the start of the line
-              radius={8}
-              fill="black"
-              draggable
-              onDragEnd={(e) =>
-                handleDotDragEnd(connection, e.target.x(), e.target.y())
-              }
-            />
-          )}
-        </React.Fragment>
+        <DraggableLine
+          key={index}
+          connection={connection}
+          fromNode={fromNode}
+          toNode={toNode}
+          controlPoints={controlPoints}
+          setControlPoints={setControlPoints}
+
+        />
+        
       );
     });
   };
+  
+  
 
   //reset
   const resetMindMap = () => {
@@ -585,11 +684,7 @@ const debouncedSaveToHistory = debounce(() => saveToHistory(), 300);
             </div>
           </>
         )}
-        {modalType === "delete" && (
-          <p className="text-gray-700 text-center">
-            Are you sure you want to delete this node?
-          </p>
-        )}
+       
       </CustomModal>
 
       <CustomModal
