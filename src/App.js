@@ -86,7 +86,7 @@ const App = () => {
   };
 
   const handleAddNode = () => {
-    const newNodeId = ` node${nodes.length + 1}`;
+    const newNodeId = `node${nodes.length + 1}`;
 
     let newX, newY, nodeColor;
 
@@ -424,6 +424,13 @@ const App = () => {
             ? "Edit Node"
             : "Delete Node"
         }
+        onSubmit={
+          modalType === "add"
+            ? handleAddNode
+            : modalType === "edit"
+            ? handleUpdateNode
+            : handleDeleteNode
+        }
         submitLabel={
           modalType === "add"
             ? "Add"
@@ -491,11 +498,6 @@ const App = () => {
               </select>
             </div>
           </>
-        )}
-        {modalType === "delete" && (
-          <p className="text-gray-700 text-center">
-            Are you sure you want to delete this node?
-          </p>
         )}
         {modalType === "delete" && (
           <p className="text-gray-700 text-center">
