@@ -29,8 +29,10 @@ const RoundedRectangleNode = ({
     }
   }, [isSelected]);
 
-  // Define bluish-grey color for text
+  // Define colors for regular and selected states
   const textColor = "#0E2038"; // Bluish-grey text color
+  const regularStrokeColor = shapeProps.stroke || "black"; // Default stroke color
+  const selectedStrokeColor = "#1E90FF"; // Highlight color when selected (e.g., DodgerBlue)
 
   const handleMouseEnter = (e) => {
     const container = e.target.getStage().container();
@@ -80,8 +82,8 @@ const RoundedRectangleNode = ({
           width={shapeProps.width}
           height={shapeProps.height}
           fill={shapeProps.fill}
-          stroke={shapeProps.stroke}
-          strokeWidth={shapeProps.strokeWidth}
+          stroke={isSelected ? selectedStrokeColor : regularStrokeColor}
+          strokeWidth={isSelected ? 4 : shapeProps.strokeWidth || 2} // Thicker stroke when selected
           cornerRadius={shapeProps.height / 2} // Fully rounded corners
         />
 

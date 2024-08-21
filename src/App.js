@@ -37,6 +37,8 @@ const App = () => {
   const [connectionLabel, setConnectionLabel] = React.useState("");
   const [modalType, setModalType] = React.useState("add");
   const [parentNodeId, setParentNodeId] = React.useState(null);
+  const [lastUndo, setLastUndo] = useState(null);
+
 
   // Save to history function
   const saveToHistory = (
@@ -55,25 +57,50 @@ const App = () => {
   };
 
   // Handle undo function
-  // Handle undo function
   const handleUndo = () => {
     if (historyIndex > 0) {
-      const previousState = history[historyIndex - 1];
-      setHistoryIndex(historyIndex - 1);
-      dispatch(setNodes(previousState.nodes));
-      dispatch(setConnections(previousState.connections));
+        const currentState = {
+            nodes: [...nodes],
+            connections: [...connections],
+        };
+        setLastUndo(currentState); // Store current state before undoing
+
+        const previousState = history[historyIndex - 1];
+        setHistoryIndex(historyIndex - 1);
+        dispatch(setNodes(previousState.nodes));
+        dispatch(setConnections(previousState.connections));
     }
-  };
+};
+
 
   // Handle redo function
   const handleRedo = () => {
     if (historyIndex < history.length - 1) {
-      const nextState = history[historyIndex + 1];
-      setHistoryIndex(historyIndex + 1);
-      dispatch(setNodes(nextState.nodes));
-      dispatch(setConnections(nextState.connections));
+        const nextState = history[historyIndex + 1];
+        setHistoryIndex(historyIndex + 1);
+        dispatch(setNodes(nextState.nodes));
+        dispatch(setConnections(nextState.connections));
+
+        setLastUndo(null); // Clear last undo since redo is performed
+
+        console.log('Redo performed');
+        console.log('History Index after redo:', historyIndex);
+        console.log('Restored Nodes:', nextState.nodes);
+        console.log('Restored Connections:', nextState.connections);
+    } else {
+        console.log('Redo not possible - history index out of bounds');
     }
-  };
+};
+
+  const handleUndoLastUndo = () => {
+    if (lastUndo) {
+        setHistoryIndex(historyIndex + 1);
+        dispatch(setNodes(lastUndo.nodes));
+        dispatch(setConnections(lastUndo.connections));
+        setLastUndo(null); // Clear last undo after performing the action
+    }
+};
+
 
   React.useEffect(() => {
     // Save to history on initial load only once, when history is empty
@@ -370,11 +397,12 @@ const App = () => {
               text={connection.label}
               x={(points[0] + points[points.length - 2]) / 2}
               y={(points[1] + points[points.length - 1]) / 2 - 10}
-              fontSize={16}
-              fill="black"
+              fontSize={20}
+              fill="#728FCE"
               align="center"
               fontFamily="Arial"
               fontStyle="bold"
+              
             />
           )}
 
@@ -422,11 +450,11 @@ const App = () => {
           </button>
           <button
             className="bg-[#333] hover:bg-black text-white font-bold py-2 px-4  shadow hover:cursor-pointer hover:ease-linear"
-            onClick={handleRedo}
-            disabled={historyIndex >= history.length - 1}
+            onClick={handleUndoLastUndo}
           >
             Redo
           </button>
+          
         </div>
 
         <Stage
