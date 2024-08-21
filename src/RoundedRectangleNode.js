@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Group, Rect, Circle, Text, Transformer, Image } from "react-konva";
+import { Group, Rect, Text, Transformer, Image } from "react-konva";
 import useImage from "use-image";
 
 const RoundedRectangleNode = ({
@@ -32,11 +32,15 @@ const RoundedRectangleNode = ({
   // Define bluish-grey color for text
   const textColor = "#0E2038"; // Bluish-grey text color
 
-  // Define grey color for node
-  const nodeColor = "#E8E8E8"; // Grey color for the node
+  const handleMouseEnter = (e) => {
+    const container = e.target.getStage().container();
+    container.style.cursor = "pointer";
+  };
 
-  const radius = shapeProps.height / 2;
-  const rectWidth = shapeProps.width - 2 * radius;
+  const handleMouseLeave = (e) => {
+    const container = e.target.getStage().container();
+    container.style.cursor = "default";
+  };
 
   return (
     <React.Fragment>
@@ -69,24 +73,16 @@ const RoundedRectangleNode = ({
           });
         }}
       >
-        {/* Left Circle */}
-        <Circle x={radius} y={radius} radius={radius} fill={nodeColor} />
-
-        {/* Right Circle */}
-        <Circle
-          x={rectWidth + radius}
-          y={radius}
-          radius={radius}
-          fill={nodeColor}
-        />
-
-        {/* Rectangle */}
+        {/* Rounded Rectangle */}
         <Rect
-          x={radius}
+          x={0}
           y={0}
-          width={rectWidth}
+          width={shapeProps.width}
           height={shapeProps.height}
-          fill={nodeColor}
+          fill={shapeProps.fill}
+          stroke={shapeProps.stroke}
+          strokeWidth={shapeProps.strokeWidth}
+          cornerRadius={shapeProps.height / 2} // Fully rounded corners
         />
 
         {/* Main Text */}
@@ -129,7 +125,8 @@ const RoundedRectangleNode = ({
           width={18} // Smaller size
           height={18} // Smaller size
           onClick={onAddChild}
-          style={{ cursor: "pointer" }}
+          onMouseEnter={handleMouseEnter} // Set cursor to pointer on hover
+          onMouseLeave={handleMouseLeave} // Reset cursor on mouse leave
         />
       )}
 
@@ -142,7 +139,8 @@ const RoundedRectangleNode = ({
           width={18} // Smaller size
           height={18} // Smaller size
           onClick={onEdit}
-          style={{ cursor: "pointer" }}
+          onMouseEnter={handleMouseEnter} // Set cursor to pointer on hover
+          onMouseLeave={handleMouseLeave} // Reset cursor on mouse leave
         />
       )}
 
@@ -155,7 +153,8 @@ const RoundedRectangleNode = ({
           width={18} // Smaller size
           height={18} // Smaller size
           onClick={onDelete}
-          style={{ cursor: "pointer" }}
+          onMouseEnter={handleMouseEnter} // Set cursor to pointer on hover
+          onMouseLeave={handleMouseLeave} // Reset cursor on mouse leave
         />
       )}
 

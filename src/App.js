@@ -1,13 +1,12 @@
 // src/App.js
-import React,{useState,useEffect} from "react";
+import React from "react";
 import { Stage, Layer, Line, Circle, Text } from "react-konva";
 import { useDispatch, useSelector } from "react-redux";
-import { addNode, updateNode, deleteNode,setNodes } from "./slices/nodesSlice";
+import { addNode, updateNode, deleteNode } from "./slices/nodesSlice";
 import {
   addConnection,
   deleteConnection,
   updateConnection,
-  setConnections
 } from "./slices/connectionsSlice";
 import { useRef } from "react";
 import RoundedRectangleNode from "./RoundedRectangleNode";
@@ -19,10 +18,6 @@ const App = () => {
   const connections = useSelector((state) => state.connections);
   const dispatch = useDispatch();
   const stageRef = useRef(null);
-
-    // Undo/Redo history states
-    const [history, setHistory] = useState([]);
-    const [historyIndex, setHistoryIndex] = useState(-1);
 
   const [selectedId, selectShape] = React.useState(null);
   const [modalIsOpen, setModalIsOpen] = React.useState(false);
@@ -38,87 +33,6 @@ const App = () => {
   const [modalType, setModalType] = React.useState("add");
   const [parentNodeId, setParentNodeId] = React.useState(null);
   const [draggingNode, setDraggingNode] = React.useState(null);
-  
-  const [controlPoints, setControlPoints] = useState({});
-
-  // Initialize control points for each connection
-  useEffect(() => {
-    const initialPoints = connections.reduce((acc, connection) => {
-      const fromNode = nodes.find((node) => node.id === connection.from);
-      const toNode = nodes.find((node) => node.id === connection.to);
-  
-      if (!fromNode || !toNode) return acc;
-  
-      acc[connection.id] = {
-        controlPoint1: { x: (fromNode.x + toNode.x) / 2, y: fromNode.y - 50 },
-        controlPoint2: { x: (fromNode.x + toNode.x) / 2, y: toNode.y + 50 },
-      };
-  
-      return acc;
-    }, {});
-  
-    setControlPoints(initialPoints);
-  }, [connections, nodes]);
-  
-  
-  
-  const saveToHistory = (nodesToSave = nodes, connectionsToSave = connections) => {
-    const currentState = {
-        nodes: [...nodesToSave],
-        connections: [...connectionsToSave],
-    };
-
-    const newHistory = history.slice(0, historyIndex + 1); // Trim history to current index
-    newHistory.push(currentState);
-    setHistory(newHistory);
-    setHistoryIndex(newHistory.length - 1); // Set index to the last element
-
-    console.log('History after save:', newHistory);
-    console.log('Current History Index after save:', historyIndex);
-};
-
-const handleUndo = () => {
-    if (historyIndex > 0) {
-        const previousState = history[historyIndex - 1];
-        setHistoryIndex(historyIndex - 1);
-        dispatch(setNodes(previousState.nodes));
-        dispatch(setConnections(previousState.connections));
-
-        console.log('Undo performed');
-        console.log('History Index after undo:', historyIndex);
-        console.log('Restored Nodes:', previousState.nodes);
-        console.log('Restored Connections:', previousState.connections);
-    }
-};
-
-const handleRedo = () => {
-    if (historyIndex < history.length - 1) {
-        const nextState = history[historyIndex + 1];
-        setHistoryIndex(historyIndex + 1);
-        dispatch(setNodes(nextState.nodes));
-        dispatch(setConnections(nextState.connections));
-
-        console.log('Redo performed');
-        console.log('History Index after redo:', historyIndex);
-        console.log('Restored Nodes:', nextState.nodes);
-        console.log('Restored Connections:', nextState.connections);
-    } else {
-        console.log('Redo not possible - history index out of bounds');
-    }
-};
-
-  
-  
-  
-
-  // Ensure saveToHistory is called whenever there is a change that should be recorded
-  React.useEffect(() => {
-    // Prevent saving to history if only the nodes/connections are empty
-    if (nodes.length > 0 || connections.length > 0) {
-      saveToHistory();
-    }
-  }, [nodes, connections]);
-
 
   const checkDeselect = (e) => {
     const clickedOnEmpty = e.target === e.target.getStage();
@@ -127,6 +41,23 @@ const handleRedo = () => {
       setEditingNodeId(null);
       setSelectedConnection(null);
     }
+  };
+
+  // Function to get the hierarchy level (0 for parent, 1 for child, 2 for grandchild)
+  const getNodeLevel = (nodeId) => {
+    if (nodeId === nodes[0]?.id) return 0; // Parent node
+    const parentConnections = connections.filter((conn) => conn.to === nodeId);
+    if (parentConnections.length > 0) {
+      const parentId = parentConnections[0].from;
+      if (parentId === nodes[0]?.id) return 1; // Child node
+      const grandParentConnections = connections.filter(
+        (conn) => conn.to === parentId
+      );
+      if (grandParentConnections.length > 0) {
+        return 2; // Grandchild node
+      }
+    }
+    return null; // No level found (not connected to the main hierarchy)
   };
 
   const handleZoom = (e) => {
@@ -155,8 +86,7 @@ const handleRedo = () => {
   };
 
   const handleAddNode = () => {
-   
-    const newNodeId = `node${nodes.length + 1}`;
+    const newNodeId = ` node${nodes.length + 1}`;
 
     let newX, newY, nodeColor;
 
@@ -166,7 +96,7 @@ const handleRedo = () => {
       newY = parentNode.y + parentNode.height + 50 + Math.random() * 50;
 
       const parentNodeIsRoot = nodes[0] && nodes[0].id === parentNodeId;
-      nodeColor = parentNodeIsRoot ? "green" : "yellow";
+      nodeColor = parentNodeIsRoot ? "green" : "#a89b32s";
     } else {
       newX = Math.random() * (window.innerWidth - 200) + 100;
       newY = Math.random() * (window.innerHeight - 200) + 100;
@@ -206,7 +136,6 @@ const handleRedo = () => {
       );
     }
 
-    saveToHistory();
     selectShape(newNodeId);
     setModalIsOpen(false);
     setNodeData({ text: "", additionalText: "" });
@@ -214,7 +143,6 @@ const handleRedo = () => {
   };
 
   const handleEditNode = (nodeId) => {
-    
     const node = nodes.find((n) => n.id === nodeId);
     setNodeData({ text: node.text, additionalText: node.additionalText || "" });
     setEditingNodeId(nodeId);
@@ -223,21 +151,16 @@ const handleRedo = () => {
   };
 
   const handleUpdateNode = () => {
-   
     dispatch(updateNode({ ...nodeData, id: editingNodeId }));
-    saveToHistory();
     setModalIsOpen(false);
     setNodeData({ text: "", additionalText: "" });
     setEditingNodeId(null);
-    
   };
 
   const handleDeleteNode = () => {
     if (editingNodeId) {
-      
       dispatch(deleteNode(editingNodeId));
       dispatch(deleteConnection(editingNodeId));
-      saveToHistory();
       setModalIsOpen(false);
       selectShape(null);
     }
@@ -245,16 +168,11 @@ const handleRedo = () => {
 
   const handleSaveLabel = () => {
     dispatch(
-      updateConnection({
-        ...selectedConnection,
-        label: connectionLabel,
-        type: lineType, // Update the connection type
-      })
+      updateConnection({ ...selectedConnection, label: connectionLabel })
     );
     setLabelModalIsOpen(false);
     setConnectionLabel("");
   };
-  
 
   const handleSelectNode = (nodeId) => {
     selectShape(nodeId);
@@ -266,21 +184,7 @@ const handleRedo = () => {
     setConnectionLabel("");
   };
 
-  const debounce = (func, delay) => {
-    let timeoutId;
-    return (...args) => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-            func(...args);
-        }, delay);
-    };
-};
-
-const debouncedSaveToHistory = debounce(() => saveToHistory(), 300);
-
-
   const handleDragEnd = (draggedNodeId, newX, newY) => {
-   
     const draggedNode = nodes.find((node) => node.id === draggedNodeId);
 
     const overlappingNode = nodes.find((node) => {
@@ -328,7 +232,6 @@ const debouncedSaveToHistory = debounce(() => saveToHistory(), 300);
     } else {
       dispatch(updateNode({ ...draggedNode, x: newX, y: newY }));
     }
-    debouncedSaveToHistory()
   };
 
   const handleDotDragEnd = (connection, newX, newY) => {
@@ -372,148 +275,55 @@ const debouncedSaveToHistory = debounce(() => saveToHistory(), 300);
     }
   };
 
- 
- const DraggableLine = ({ connection, fromNode, toNode, controlPoints, setControlPoints }) => {
-    const handleDragEnd1 = (e) => {
-      const newControlPoint1 = { x: e.target.x(), y: e.target.y() };
-      setControlPoints((prevPoints) => ({
-        ...prevPoints,
-        [connection.id]: {
-          ...prevPoints[connection.id],
-          controlPoint1: newControlPoint1,
-        },
-      }));
-    };
-  
-    const handleDragEnd2 = (e) => {
-      const newControlPoint2 = { x: e.target.x(), y: e.target.y() };
-      setControlPoints((prevPoints) => ({
-        ...prevPoints,
-        [connection.id]: {
-          ...prevPoints[connection.id],
-          controlPoint2: newControlPoint2,
-        },
-      }));
-    };
-  
-    const getPointsForLineType = () => {
-      const { controlPoint1, controlPoint2 } = controlPoints[connection.id] || {};
-  
-      switch (connection.type) {
-        case "Straight Line":
-          return [fromNode.x, fromNode.y, toNode.x, toNode.y];
-        case "Curved Line":
-        case "Rounded Line":
-          return [
-            fromNode.x, fromNode.y,
-            controlPoint1.x, controlPoint1.y,
-            controlPoint2.x, controlPoint2.y,
-            toNode.x, toNode.y,
-          ];
-        case "Angled Line":
-          const middleX = fromNode.x + (toNode.x - fromNode.x) / 2;
-          return [
-            fromNode.x, fromNode.y,
-            middleX, fromNode.y,
-            middleX, toNode.y,
-            toNode.x, toNode.y,
-          ];
-        default:
-          return [];
-      }
-    };
-  
-    const points = getPointsForLineType();
-  
-    return (
-      <React.Fragment>
-        <Line
-          points={points}
-          stroke="rgba(128, 128, 128, 0.5)"
-          strokeWidth={8}
-          lineCap="round"
-          lineJoin="round"
-          tension={connection.type === "Curved Line" ? 0.5 : 0}
-          onClick={() => setSelectedConnection(connection)}
-          onDblClick={() => {
-            setSelectedConnection(connection);
-            setConnectionLabel(connection.label || "");
-            setLineType(connection.type);
-            setLabelModalIsOpen(true);
-          }}
-        />
-        {connection.label && (
-          <Text
-            text={connection.label}
-            x={(points[0] + points[points.length - 2]) / 2}
-            y={(points[1] + points[points.length - 1]) / 2 - 10}
-            fontSize={16}
-            fill="black"
-            align="center"
-            fontFamily="Arial"
-            fontStyle="bold"
-          />
-        )}
-  
-        {["Curved Line", "Rounded Line", "Angled Line"].includes(connection.type) && (
-          <React.Fragment>
-            <Circle
-              x={controlPoints[connection.id].controlPoint1.x}
-              y={controlPoints[connection.id].controlPoint1.y}
-              radius={8}
-              fill="blue"
-              draggable
-              onDragEnd={handleDragEnd1}
-            />
-            <Circle
-              x={controlPoints[connection.id].controlPoint2.x}
-              y={controlPoints[connection.id].controlPoint2.y}
-              radius={8}
-              fill="red"
-              draggable
-              onDragEnd={handleDragEnd2}
-            />
-          </React.Fragment>
-        )}
-      </React.Fragment>
-    );
-  }
-  
-  
   const drawConnections = () => {
     return connections.map((connection, index) => {
       const fromNode = nodes.find((node) => node.id === connection.from);
       const toNode = nodes.find((node) => node.id === connection.to);
-  
-      if (!fromNode || !toNode) return null;
-  
-      return (
-        <DraggableLine
-          key={index}
-          connection={connection}
-          fromNode={fromNode}
-          toNode={toNode}
-          controlPoints={controlPoints}
-          setControlPoints={setControlPoints}
 
-        />
-        
+      if (!fromNode || !toNode) return null;
+
+      const points = getConnectionPoints(fromNode, toNode, connection.type);
+
+      return (
+        <React.Fragment key={index}>
+          <Line
+            points={points}
+            stroke="green" // Grey color with 50% transparency
+            strokeWidth={8}
+            lineCap="round"
+            lineJoin="round"
+            tension={connection.type === "Curved Line" ? 0.5 : 0}
+            onClick={() => setSelectedConnection(connection)}
+          />
+          {connection.label && (
+            <Text
+              text={connection.label}
+              x={(points[0] + points[points.length - 2]) / 2}
+              y={(points[1] + points[points.length - 1]) / 2 - 10}
+              fontSize={16}
+              fill="black"
+              align="center"
+              fontFamily="Arial"
+              fontStyle="bold"
+            />
+          )}
+
+          {selectedConnection === connection && (
+            <Circle
+              x={(points[0] + points[2]) / 2}
+              y={(points[1] + points[3]) / 2}
+              radius={8}
+              fill="black"
+              draggable
+              onDragEnd={(e) =>
+                handleDotDragEnd(connection, e.target.x(), e.target.y())
+              }
+            />
+          )}
+        </React.Fragment>
       );
     });
   };
-  
-  
-
-  //reset
-  const resetMindMap = () => {
-    // Reset nodes and connections to empty arrays
-    dispatch(setNodes([]));
-    dispatch(setConnections([]));
-    setHistory([])
-    setHistoryIndex(-1)
-  };
-  
-  
 
   return (
     <div className="container mx-auto py-4">
@@ -525,14 +335,13 @@ const debouncedSaveToHistory = debounce(() => saveToHistory(), 300);
         <button
           className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow"
           onClick={() => {
-            resetMindMap()
             setModalType("add");
             setModalIsOpen(true);
           }}
         >
-          Create Mind Map
+          Add Node
         </button>
-        {/* <button
+        <button
           className="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded shadow"
           onClick={() => handleEditNode(selectedId)}
           disabled={!selectedId}
@@ -548,20 +357,6 @@ const debouncedSaveToHistory = debounce(() => saveToHistory(), 300);
           disabled={!selectedId}
         >
           Delete Node
-        </button> */}
-        <button
-          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow"
-          onClick={handleUndo}
-          disabled={historyIndex <= 0}
-        >
-          Undo
-        </button>
-        <button
-          className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded shadow"
-          onClick={handleRedo}
-          disabled={historyIndex >= history.length - 1}
-        >
-          Redo
         </button>
       </div>
 
@@ -574,27 +369,47 @@ const debouncedSaveToHistory = debounce(() => saveToHistory(), 300);
         onWheel={handleZoom}
       >
         <Layer>
-          {nodes.map((node, i) => (
-            <RoundedRectangleNode
-              key={i}
-              shapeProps={node}
-              isSelected={node.id === selectedId}
-              onSelect={() => handleSelectNode(node.id)}
-              onChange={(newAttrs) => dispatch(updateNode(newAttrs))}
-              onAddChild={() => {
-                setParentNodeId(node.id);
-                setModalType("add");
-                setModalIsOpen(true);
-              }}
-              onEdit={() => handleEditNode(node.id)}
-              onDelete={() => {
-                dispatch(deleteNode(node.id));
-                dispatch(deleteConnection(node.id));
-                selectShape(null);
-              }}
-              onDragEnd={(newX, newY) => handleDragEnd(node.id, newX, newY)}
-            />
-          ))}
+          {nodes.map((node, i) => {
+            const level = getNodeLevel(node.id);
+            let strokeColor = "black"; // Default stroke color
+            let strokeWidth = 2; // Default stroke width
+
+            if (level === 0) {
+              strokeColor = "cyan"; // Parent node
+            } else if (level === 1) {
+              strokeColor = "green"; // Child node
+              strokeWidth = 4; // Bold
+            } else if (level === 2) {
+              strokeColor = "#bfbf02"; // Grandchild node
+            }
+
+            return (
+              <RoundedRectangleNode
+                key={i}
+                shapeProps={{
+                  ...node,
+                  fill: "transparent", // Transparent fill
+                  stroke: strokeColor,
+                  strokeWidth: strokeWidth,
+                }}
+                isSelected={node.id === selectedId}
+                onSelect={() => handleSelectNode(node.id)}
+                onChange={(newAttrs) => dispatch(updateNode(newAttrs))}
+                onAddChild={() => {
+                  setParentNodeId(node.id);
+                  setModalType("add");
+                  setModalIsOpen(true);
+                }}
+                onEdit={() => handleEditNode(node.id)}
+                onDelete={() => {
+                  dispatch(deleteNode(node.id));
+                  dispatch(deleteConnection(node.id));
+                  selectShape(null);
+                }}
+                onDragEnd={(newX, newY) => handleDragEnd(node.id, newX, newY)}
+              />
+            );
+          })}
           {drawConnections()}
         </Layer>
       </Stage>
@@ -684,62 +499,46 @@ const debouncedSaveToHistory = debounce(() => saveToHistory(), 300);
             </div>
           </>
         )}
-       
+        {modalType === "delete" && (
+          <p className="text-gray-700 text-center">
+            Are you sure you want to delete this node?
+          </p>
+        )}
       </CustomModal>
 
       <CustomModal
-  isOpen={labelModalIsOpen}
-  onRequestClose={() => setLabelModalIsOpen(false)}
-  title="Add/Update Label to Connection"
-  onSubmit={handleSaveLabel}
-  submitLabel="Save"
->
-  <div className="mb-4">
-    <label
-      className="block text-gray-700 text-sm font-bold mb-2"
-      htmlFor="label"
-    >
-      Connection Label
-    </label>
-    <input
-      id="label"
-      type="text"
-      value={connectionLabel}
-      onChange={(e) => setConnectionLabel(e.target.value)}
-      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-      placeholder="Enter connection label"
-    />
-  </div>
-  <div className="mb-4">
-    <label
-      className="block text-gray-700 text-sm font-bold mb-2"
-      htmlFor="lineType"
-    >
-      Connection Line Type
-    </label>
-    <select
-      id="lineType"
-      value={lineType}
-      onChange={(e) => setLineType(e.target.value)}
-      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-    >
-      <option value="Straight Line">Straight Line</option>
-      <option value="Curved Line">Curved Line</option>
-      <option value="Angled Line">Angled Line</option>
-      <option value="Rounded Line">Rounded Line</option>
-    </select>
-  </div>
-  <div className="flex justify-end">
-    <button
-      type="button"
-      onClick={handleDeleteLabel}
-      className="ml-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow"
-    >
-      Delete Label
-    </button>
-  </div>
-</CustomModal>
-
+        isOpen={labelModalIsOpen}
+        onRequestClose={() => setLabelModalIsOpen(false)}
+        title="Add/Update Label to Connection"
+        onSubmit={handleSaveLabel}
+        submitLabel="Save"
+      >
+        <div className="mb-4">
+          <label
+            className="block text-gray-700 text-sm font-bold mb-2"
+            htmlFor="label"
+          >
+            Connection Label
+          </label>
+          <input
+            id="label"
+            type="text"
+            value={connectionLabel}
+            onChange={(e) => setConnectionLabel(e.target.value)}
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            placeholder="Enter connection label"
+          />
+        </div>
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={handleDeleteLabel}
+            className="ml-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow"
+          >
+            Delete Label
+          </button>
+        </div>
+      </CustomModal>
     </div>
   );
 };
