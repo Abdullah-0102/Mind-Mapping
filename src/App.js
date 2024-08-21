@@ -1,18 +1,18 @@
-// src/App.js
-import React,{useState} from "react";
+import React, { useState } from "react";
 import { Stage, Layer, Line, Circle, Text } from "react-konva";
 import { useDispatch, useSelector } from "react-redux";
-import { addNode, updateNode, deleteNode ,setNodes} from "./slices/nodesSlice";
+import { addNode, updateNode, deleteNode, setNodes } from "./slices/nodesSlice";
 import {
   addConnection,
   deleteConnection,
   updateConnection,
-  setConnections
+  setConnections,
 } from "./slices/connectionsSlice";
 import { useRef } from "react";
 import RoundedRectangleNode from "./RoundedRectangleNode";
 import { getConnectionPoints } from "./utils";
 import CustomModal from "./CustomModal";
+import logo from "./assets/mind-mapping.png";
 
 const App = () => {
   const nodes = useSelector((state) => state.nodes);
@@ -20,9 +20,9 @@ const App = () => {
   const dispatch = useDispatch();
   const stageRef = useRef(null);
 
-   // Undo/Redo history states
-   const [history, setHistory] = useState([]);
-   const [historyIndex, setHistoryIndex] = useState(-1);
+  // Undo/Redo history states
+  const [history, setHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
 
   const [selectedId, selectShape] = React.useState(null);
   const [modalIsOpen, setModalIsOpen] = React.useState(false);
@@ -38,54 +38,55 @@ const App = () => {
   const [modalType, setModalType] = React.useState("add");
   const [parentNodeId, setParentNodeId] = React.useState(null);
 
-
-  
-  const saveToHistory = (nodesToSave = nodes, connectionsToSave = connections) => {
+  // Save to history function
+  const saveToHistory = (
+    nodesToSave = nodes,
+    connectionsToSave = connections
+  ) => {
     const currentState = {
-        nodes: [...nodesToSave],
-        connections: [...connectionsToSave],
+      nodes: [...nodesToSave],
+      connections: [...connectionsToSave],
     };
 
     const newHistory = history.slice(0, historyIndex + 1); // Trim history to current index
     newHistory.push(currentState);
     setHistory(newHistory);
     setHistoryIndex(newHistory.length - 1); // Set index to the last element
+  };
 
-};
-
-const handleUndo = () => {
+  // Handle undo function
+  // Handle undo function
+  const handleUndo = () => {
     if (historyIndex > 0) {
-        const previousState = history[historyIndex - 1];
-        setHistoryIndex(historyIndex - 1);
-        dispatch(setNodes(previousState.nodes));
-        dispatch(setConnections(previousState.connections));
-
-     
+      const previousState = history[historyIndex - 1];
+      setHistoryIndex(historyIndex - 1);
+      dispatch(setNodes(previousState.nodes));
+      dispatch(setConnections(previousState.connections));
     }
-};
+  };
 
-const handleRedo = () => {
+  // Handle redo function
+  const handleRedo = () => {
     if (historyIndex < history.length - 1) {
-        const nextState = history[historyIndex + 1];
-        setHistoryIndex(historyIndex + 1);
-        dispatch(setNodes(nextState.nodes));
-        dispatch(setConnections(nextState.connections));
-
-        console.log('Redo performed');
-        console.log('History Index after redo:', historyIndex);
-        console.log('Restored Nodes:', nextState.nodes);
-        console.log('Restored Connections:', nextState.connections);
-    } else {
-        console.log('Redo not possible - history index out of bounds');
+      const nextState = history[historyIndex + 1];
+      setHistoryIndex(historyIndex + 1);
+      dispatch(setNodes(nextState.nodes));
+      dispatch(setConnections(nextState.connections));
     }
-};
+  };
 
+  React.useEffect(() => {
+    // Save to history on initial load only once, when history is empty
+    if (historyIndex === -1) {
+      saveToHistory();
+    }
+  }, []); // Empty dependency array to only run on mount
 
-React.useEffect(() => {
-  if (nodes.length > 0 || connections.length > 0) {
-    saveToHistory();
-  }
-}, [nodes, connections]);
+  React.useEffect(() => {
+    if (historyIndex === history.length - 1) return; // Prevent saving to history if undoing/redoing
+
+    saveToHistory(); // Save to history every time nodes or connections change
+  }, [nodes, connections]);
 
   const checkDeselect = (e) => {
     const clickedOnEmpty = e.target === e.target.getStage();
@@ -149,7 +150,7 @@ React.useEffect(() => {
       newY = parentNode.y + parentNode.height + 50 + Math.random() * 50;
 
       const parentNodeIsRoot = nodes[0] && nodes[0].id === parentNodeId;
-      nodeColor = parentNodeIsRoot ? "green" : "#a89b32s";
+      nodeColor = parentNodeIsRoot ? "green" : "#a89b32";
     } else {
       newX = Math.random() * (window.innerWidth - 200) + 100;
       newY = Math.random() * (window.innerHeight - 200) + 100;
@@ -189,7 +190,6 @@ React.useEffect(() => {
       );
     }
 
-
     saveToHistory();
 
     selectShape(newNodeId);
@@ -224,7 +224,6 @@ React.useEffect(() => {
     }
   };
 
- 
   const handleSaveLabel = () => {
     dispatch(
       updateConnection({
@@ -247,7 +246,7 @@ React.useEffect(() => {
     saveToHistory();
     setLabelModalIsOpen(false);
     setConnectionLabel("");
-  }
+  };
 
   const handleDragEnd = (draggedNodeId, newX, newY) => {
     const draggedNode = nodes.find((node) => node.id === draggedNodeId);
@@ -340,21 +339,20 @@ React.useEffect(() => {
     }
   };
 
- 
   const drawConnections = () => {
     return connections.map((connection, index) => {
       const fromNode = nodes.find((node) => node.id === connection.from);
       const toNode = nodes.find((node) => node.id === connection.to);
-  
+
       if (!fromNode || !toNode) return null;
-  
+
       const points = getConnectionPoints(fromNode, toNode, connection.type);
-  
+
       return (
         <React.Fragment key={index}>
           <Line
             points={points}
-            stroke="green"
+            stroke="#333"
             strokeWidth={8}
             lineCap="round"
             lineJoin="round"
@@ -365,7 +363,7 @@ React.useEffect(() => {
               setConnectionLabel(connection.label || "");
               setLineType(connection.type); // Set the current type in the modal
               setLabelModalIsOpen(true);
-            }}  // Double-click handler
+            }} // Double-click handler
           />
           {connection.label && (
             <Text
@@ -379,7 +377,7 @@ React.useEffect(() => {
               fontStyle="bold"
             />
           )}
-  
+
           {selectedConnection === connection && (
             <Circle
               x={points[0]}
@@ -396,103 +394,96 @@ React.useEffect(() => {
       );
     });
   };
-  
-    //reset
-    // const resetMindMap = () => {
-    //   // Reset nodes and connections to empty arrays
-    //   dispatch(setNodes([]));
-    //   dispatch(setConnections([]));
-    //   setHistory([])
-    //   setHistoryIndex(-1)
-    // };
-  
 
   return (
-    <div className="container mx-auto py-4">
-      <h1 className="text-4xl font-bold text-center mb-6">
-        Mind Map Application
-      </h1>
+    <div className="bg-[beige] min-h-screen">
+      <nav className="bg-[beige] bg-opacity-70 py-4 flex justify-center items-center w-[90rem] min-w-full">
+        <img src={logo} alt="Mind Mapping Logo" className="h-12 mr-4" />
+        <h1 className="text-4xl font-bold text-black">Mind Map Application</h1>
+      </nav>
 
-      <div className="flex space-x-4 justify-center my-4">
-        <button
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow"
-          onClick={() => {
-            setModalType("add");
-            setModalIsOpen(true);
-            // resetMindMap()
-          }}
+      <div className="container mx-auto py-6">
+        <div className="flex space-x-4 justify-center my-4">
+          <button
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 shadow hover:cursor-pointer hover:ease-linear "
+            onClick={() => {
+              setModalType("add");
+              setModalIsOpen(true);
+            }}
+          >
+            Create Node
+          </button>
+          <button
+            className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4  shadow hover:cursor-pointer hover:ease-linear"
+            onClick={handleUndo}
+            disabled={historyIndex <= 0}
+          >
+            Undo
+          </button>
+          <button
+            className="bg-[#333] hover:bg-black text-white font-bold py-2 px-4  shadow hover:cursor-pointer hover:ease-linear"
+            onClick={handleRedo}
+            disabled={historyIndex >= history.length - 1}
+          >
+            Redo
+          </button>
+        </div>
+
+        <Stage
+          ref={stageRef}
+          width={window.innerWidth}
+          height={window.innerHeight - 200}
+          onMouseDown={checkDeselect}
+          onTouchStart={checkDeselect}
+          onWheel={handleZoom}
         >
-          Create Node
-        </button>
-        <button
-          className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow"
-          onClick={handleUndo}
-          disabled={historyIndex <= 0}
-        >
-          Undo
-        </button>
-        <button
-          className="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded shadow"
-          onClick={handleRedo}
-          disabled={historyIndex >= history.length - 1}
-        >
-          Redo
-        </button>
+          <Layer>
+            {nodes.map((node, i) => {
+              const level = getNodeLevel(node.id);
+              let strokeColor = "black"; // Default stroke color
+              let strokeWidth = 2; // Default stroke width
+
+              if (level === 0) {
+                strokeColor = "cyan"; // Parent node
+              } else if (level === 1) {
+                strokeColor = "green"; // Child node
+                strokeWidth = 4; // Bold
+              } else if (level === 2) {
+                strokeColor = "#E0B80AC0"; // Grandchild
+                strokeWidth = 3; // Bold
+              }
+
+              return (
+                <RoundedRectangleNode
+                  key={i}
+                  shapeProps={{
+                    ...node,
+                    fill: "transparent", // Transparent fill
+                    stroke: strokeColor,
+                    strokeWidth: strokeWidth,
+                  }}
+                  isSelected={node.id === selectedId}
+                  onSelect={() => handleSelectNode(node.id)}
+                  onChange={(newAttrs) => dispatch(updateNode(newAttrs))}
+                  onAddChild={() => {
+                    setParentNodeId(node.id);
+                    setModalType("add");
+                    setModalIsOpen(true);
+                  }}
+                  onEdit={() => handleEditNode(node.id)}
+                  onDelete={() => {
+                    dispatch(deleteNode(node.id));
+                    dispatch(deleteConnection(node.id));
+                    selectShape(null);
+                  }}
+                  onDragEnd={(newX, newY) => handleDragEnd(node.id, newX, newY)}
+                />
+              );
+            })}
+            {drawConnections()}
+          </Layer>
+        </Stage>
       </div>
-
-      <Stage
-        ref={stageRef}
-        width={window.innerWidth}
-        height={window.innerHeight}
-        onMouseDown={checkDeselect}
-        onTouchStart={checkDeselect}
-        onWheel={handleZoom}
-      >
-        <Layer>
-          {nodes.map((node, i) => {
-            const level = getNodeLevel(node.id);
-            let strokeColor = "black"; // Default stroke color
-            let strokeWidth = 2; // Default stroke width
-
-            if (level === 0) {
-              strokeColor = "cyan"; // Parent node
-            } else if (level === 1) {
-              strokeColor = "green"; // Child node
-              strokeWidth = 4; // Bold
-            } else if (level === 2) {
-              strokeColor = "#bfbf02"; // Grandchild node
-            }
-
-            return (
-              <RoundedRectangleNode
-                key={i}
-                shapeProps={{
-                  ...node,
-                  fill: "transparent", // Transparent fill
-                  stroke: strokeColor,
-                  strokeWidth: strokeWidth,
-                }}
-                isSelected={node.id === selectedId}
-                onSelect={() => handleSelectNode(node.id)}
-                onChange={(newAttrs) => dispatch(updateNode(newAttrs))}
-                onAddChild={() => {
-                  setParentNodeId(node.id);
-                  setModalType("add");
-                  setModalIsOpen(true);
-                }}
-                onEdit={() => handleEditNode(node.id)}
-                onDelete={() => {
-                  dispatch(deleteNode(node.id));
-                  dispatch(deleteConnection(node.id));
-                  selectShape(null);
-                }}
-                onDragEnd={(newX, newY) => handleDragEnd(node.id, newX, newY)}
-              />
-            );
-          })}
-          {drawConnections()}
-        </Layer>
-      </Stage>
 
       <CustomModal
         isOpen={modalIsOpen}
@@ -552,7 +543,10 @@ React.useEffect(() => {
                 type="text"
                 value={nodeData.additionalText}
                 onChange={(e) =>
-                  setNodeData({ ...nodeData, additionalText: e.target.value })
+                  setNodeData({
+                    ...nodeData,
+                    additionalText: e.target.value,
+                  })
                 }
                 className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                 placeholder="Enter additional text"
@@ -587,57 +581,57 @@ React.useEffect(() => {
       </CustomModal>
 
       <CustomModal
-  isOpen={labelModalIsOpen}
-  onRequestClose={() => setLabelModalIsOpen(false)}
-  title="Add/Update Label to Connection"
-  onSubmit={handleSaveLabel}
-  submitLabel="Save"
->
-  <div className="mb-4">
-    <label
-      className="block text-gray-700 text-sm font-bold mb-2"
-      htmlFor="label"
-    >
-      Connection Label
-    </label>
-    <input
-      id="label"
-      type="text"
-      value={connectionLabel}
-      onChange={(e) => setConnectionLabel(e.target.value)}
-      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-      placeholder="Enter connection label"
-    />
-  </div>
-  <div className="mb-4">
-    <label
-      className="block text-gray-700 text-sm font-bold mb-2"
-      htmlFor="lineType"
-    >
-      Connection Line Type
-    </label>
-    <select
-      id="lineType"
-      value={lineType}
-      onChange={(e) => setLineType(e.target.value)}
-      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-    >
-      <option value="Straight Line">Straight Line</option>
-      <option value="Curved Line">Curved Line</option>
-      <option value="Angled Line">Angled Line</option>
-      <option value="Rounded Line">Rounded Line</option>
-    </select>
-  </div>
-  <div className="flex justify-end">
-    <button
-      type="button"
-      onClick={handleDeleteLabel}
-      className="ml-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow"
-    >
-      Delete Label
-    </button>
-  </div>
-</CustomModal>
+        isOpen={labelModalIsOpen}
+        onRequestClose={() => setLabelModalIsOpen(false)}
+        title="Add/Update Label to Connection"
+        onSubmit={handleSaveLabel}
+        submitLabel="Save"
+      >
+        <div className="mb-4">
+          <label
+            className="block text-gray-700 text-sm font-bold mb-2"
+            htmlFor="label"
+          >
+            Connection Label
+          </label>
+          <input
+            id="label"
+            type="text"
+            value={connectionLabel}
+            onChange={(e) => setConnectionLabel(e.target.value)}
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            placeholder="Enter connection label"
+          />
+        </div>
+        <div className="mb-4">
+          <label
+            className="block text-gray-700 text-sm font-bold mb-2"
+            htmlFor="lineType"
+          >
+            Connection Line Type
+          </label>
+          <select
+            id="lineType"
+            value={lineType}
+            onChange={(e) => setLineType(e.target.value)}
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          >
+            <option value="Straight Line">Straight Line</option>
+            <option value="Curved Line">Curved Line</option>
+            <option value="Angled Line">Angled Line</option>
+            <option value="Rounded Line">Rounded Line</option>
+          </select>
+        </div>
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={handleDeleteLabel}
+            className="ml-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow"
+          >
+            Delete Label
+          </button>
+        </div>
+      </CustomModal>
     </div>
   );
 };
