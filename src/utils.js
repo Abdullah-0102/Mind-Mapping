@@ -1,55 +1,55 @@
-// src/utils.js
 export const getConnectionPoints = (fromNode, toNode, type) => {
-  const fromX = fromNode.x + fromNode.width / 2;
-  const fromY = fromNode.y + fromNode.height / 2;
-  const toX = toNode.x + toNode.width / 2;
-  const toY = toNode.y + toNode.height / 2;
+  const fromCenterX = fromNode.x + fromNode.width / 2;
+  const fromCenterY = fromNode.y + fromNode.height / 2;
+  const toCenterX = toNode.x + toNode.width / 2;
+  const toCenterY = toNode.y + toNode.height / 2;
 
-  const deltaX = toX - fromX;
-  const deltaY = toY - fromY;
-  const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+  // Calculate the angle between the two nodes
+  const angle = Math.atan2(toCenterY - fromCenterY, toCenterX - fromCenterX);
 
-  const offsetX = (deltaX / distance) * (fromNode.width / 2);
-  const offsetY = (deltaY / distance) * (fromNode.height / 2);
+  // Calculate the offset for the connection points to stop at the border of the nodes
+  const fromOffsetX = (fromNode.width / 1.7) * Math.cos(angle);
+  const fromOffsetY = (fromNode.height / 1.7) * Math.sin(angle);
+  const toOffsetX = (toNode.width / 1.7) * Math.cos(angle);
+  const toOffsetY = (toNode.height / 1.7) * Math.sin(angle);
 
-  const adjustedFromX = fromX + offsetX;
-  const adjustedFromY = fromY + offsetY;
-  const adjustedToX = toX - offsetX;
-  const adjustedToY = toY - offsetY;
-
+  // Calculate the points where the lines should start and end (at the edge of the nodes)
+  const fromX = fromCenterX + fromOffsetX;
+  const fromY = fromCenterY + fromOffsetY;
+  const toX = toCenterX - toOffsetX;
+  const toY = toCenterY - toOffsetY;
   switch (type) {
     case "Curved Line":
+      // Control points dynamically calculated for a smoother curve
+      const controlPointX1 = fromX + (toX - fromX) / 3.5;
+      const controlPointY1 = fromY;
+      const controlPointX2 = toX - (toX - fromX) / 3.5;
+      const controlPointY2 = toY;
+
       return [
-        adjustedFromX,
-        adjustedFromY,
-        (adjustedFromX + adjustedToX) / 2,
-        adjustedFromY, // Control point
-        (adjustedFromX + adjustedToX) / 2,
-        adjustedToY, // Control point
-        adjustedToX,
-        adjustedToY,
+        fromX,
+        fromY,
+        controlPointX1,
+        controlPointY1,
+        controlPointX2,
+        controlPointY2,
+        toX,
+        toY,
       ];
     case "Angled Line":
-      return [
-        adjustedFromX,
-        adjustedFromY,
-        adjustedFromX,
-        adjustedToY,
-        adjustedToX,
-        adjustedToY,
-      ];
+      return [fromX, fromY, fromX, toY, toX, toY];
     case "Rounded Line":
       return [
-        adjustedFromX,
-        adjustedFromY,
-        adjustedFromX + (adjustedToX - adjustedFromX) / 2,
-        adjustedFromY,
-        adjustedToX - (adjustedToX - adjustedFromX) / 2,
-        adjustedToY,
-        adjustedToX,
-        adjustedToY,
+        fromX,
+        fromY,
+        fromX + (toX - fromX) / 2,
+        fromY,
+        toX - (toX - fromX) / 2,
+        toY,
+        toX,
+        toY,
       ];
     default: // 'Straight Line'
-      return [adjustedFromX, adjustedFromY, adjustedToX, adjustedToY];
+      return [fromX, fromY, toX, toY];
   }
 };
