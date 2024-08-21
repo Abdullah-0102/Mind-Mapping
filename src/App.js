@@ -51,8 +51,6 @@ const App = () => {
     setHistory(newHistory);
     setHistoryIndex(newHistory.length - 1); // Set index to the last element
 
-    console.log('History after save:', newHistory);
-    console.log('Current History Index after save:', historyIndex);
 };
 
 const handleUndo = () => {
@@ -62,10 +60,7 @@ const handleUndo = () => {
         dispatch(setNodes(previousState.nodes));
         dispatch(setConnections(previousState.connections));
 
-        console.log('Undo performed');
-        console.log('History Index after undo:', historyIndex);
-        console.log('Restored Nodes:', previousState.nodes);
-        console.log('Restored Connections:', previousState.connections);
+     
     }
 };
 
@@ -402,6 +397,14 @@ React.useEffect(() => {
     });
   };
   
+    //reset
+    // const resetMindMap = () => {
+    //   // Reset nodes and connections to empty arrays
+    //   dispatch(setNodes([]));
+    //   dispatch(setConnections([]));
+    //   setHistory([])
+    //   setHistoryIndex(-1)
+    // };
   
 
   return (
@@ -416,9 +419,10 @@ React.useEffect(() => {
           onClick={() => {
             setModalType("add");
             setModalIsOpen(true);
+            // resetMindMap()
           }}
         >
-          Add Node
+          Create Node
         </button>
         <button
           className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow"
