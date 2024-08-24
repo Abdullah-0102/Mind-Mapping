@@ -154,7 +154,7 @@ const App = () => {
     };
 
     let newScale = e.evt.deltaY > 0 ? oldScale * scaleBy : oldScale / scaleBy;
-    newScale = Math.max(0.5, Math.min(2, newScale)); // Limit zoom scale between 0.5 and 2
+    newScale = Math.max(0.3, Math.min(2, newScale)); // Limit zoom scale between 0.5 and 2
 
     stage.scale({ x: newScale, y: newScale });
 
@@ -366,47 +366,125 @@ const App = () => {
     }
   };
 
-  const drawConnections = () => {
-    return connections.map((connection, index) => {
-      const fromNode = nodes.find((node) => node.id === connection.from);
-      const toNode = nodes.find((node) => node.id === connection.to);
-
-      if (!fromNode || !toNode) return null;
-
-      const points = getConnectionPoints(fromNode, toNode, connection.type);
-
-      return (
-        <React.Fragment key={index}>
-          <Line
-            points={points}
-            stroke="#333"
-            strokeWidth={8}
-            lineCap="round"
-            lineJoin="round"
-            tension={connection.type === "Curved Line" ? 0.5 : 0}
-            onClick={() => setSelectedConnection(connection)}
-            onDblClick={() => {
-              setSelectedConnection(connection);
-              setConnectionLabel(connection.label || "");
-              setLineType(connection.type); // Set the current type in the modal
-              setLabelModalIsOpen(true);
-            }} // Double-click handler
+  const DraggableLine = ({ connection, fromNode, toNode }) => {
+    const [controlPoint1, setControlPoint1] = useState({
+      x: (fromNode.x + toNode.x) / 2,
+      y: fromNode.y - 50,
+    });
+    const [controlPoint2, setControlPoint2] = useState({
+      x: (fromNode.x + toNode.x) / 2,
+      y: toNode.y + 50,
+    });
+  
+    const handleDragEnd1 = (e) => {
+      setControlPoint1({ x: e.target.x(), y: e.target.y() });
+    };
+  
+    const handleDragEnd2 = (e) => {
+      setControlPoint2({ x: e.target.x(), y: e.target.y() });
+    };
+  
+    const getPointsForLineType = () => {
+      const fromX = fromNode.x + fromNode.width / 2;
+      const fromY = fromNode.y + fromNode.height / 2;
+      const toX = toNode.x + toNode.width / 2;
+      const toY = toNode.y + toNode.height / 2;
+  
+      const deltaX = toX - fromX;
+      const deltaY = toY - fromY;
+      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+  
+      const offsetX = (deltaX / distance) * (fromNode.width / 2);
+      const offsetY = (deltaY / distance) * (fromNode.height / 2);
+  
+      const adjustedFromX = fromX + offsetX;
+      const adjustedFromY = fromY + offsetY;
+      const adjustedToX = toX - offsetX;
+      const adjustedToY = toY - offsetY;
+  
+      switch (connection.type) {
+        case "Straight Line":
+          return [adjustedFromX, adjustedFromY, adjustedToX, adjustedToY];
+        case "Curved Line":
+          return [
+            adjustedFromX, adjustedFromY,
+            controlPoint1.x, controlPoint1.y,
+            controlPoint2.x, controlPoint2.y,
+            adjustedToX, adjustedToY,
+          ];
+        case "Angled Line":
+          return [
+            adjustedFromX, adjustedFromY,
+            controlPoint1.x, adjustedFromY,
+            controlPoint1.x, adjustedToY,
+            adjustedToX, adjustedToY,
+          ];
+        case "Rounded Line":
+          return [
+            adjustedFromX, adjustedFromY,
+            controlPoint1.x, controlPoint1.y,
+            controlPoint2.x, controlPoint2.y,
+            adjustedToX, adjustedToY,
+          ];
+        default:
+          return [];
+      }
+    };
+  
+    const points = getPointsForLineType();
+  
+    return (
+      <React.Fragment>
+        <Line
+          points={points}
+          stroke="rgba(128, 128, 128, 0.5)"
+          strokeWidth={8}
+          lineCap="round"
+          lineJoin="round"
+          tension={connection.type === "Curved Line" ? 0.5 : 0}
+          onClick={() => setSelectedConnection(connection)}
+          onDblClick={() => {
+            setSelectedConnection(connection);
+            setConnectionLabel(connection.label || "");
+            setLineType(connection.type);
+            setLabelModalIsOpen(true);
+          }}
+        />
+        {connection.label && (
+          <Text
+            text={connection.label}
+            x={(points[0] + points[points.length - 2]) / 2}
+            y={(points[1] + points[points.length - 1]) / 2 - 10}
+            fontSize={16}
+            fill="black"
+            align="center"
+            fontFamily="Arial"
+            fontStyle="bold"
           />
-          {connection.label && (
-            <Text
-              text={connection.label}
-              x={(points[0] + points[points.length - 2]) / 2}
-              y={(points[1] + points[points.length - 1]) / 2 - 10}
-              fontSize={20}
-              fill="#728FCE"
-              align="center"
-              fontFamily="Arial"
-              fontStyle="bold"
-              
+        )}
+  
+        {/* Draggable Control Points for Curved and Rounded Lines */}
+        {["Curved Line", "Rounded Line", "Angled Line"].includes(connection.type) && (
+          <React.Fragment>
+            <Circle
+              x={controlPoint1.x}
+              y={controlPoint1.y}
+              radius={8}
+              fill="blue"
+              draggable
+              onDragEnd={handleDragEnd1}
             />
-          )}
-
-          {selectedConnection === connection && (
+            <Circle
+              x={controlPoint2.x}
+              y={controlPoint2.y}
+              radius={8}
+              fill="red"
+              draggable
+              onDragEnd={handleDragEnd2}
+            />
+          </React.Fragment>
+        )}
+         {selectedConnection === connection && (
             <Circle
               x={points[0]}
               y={points[1]}
@@ -418,11 +496,28 @@ const App = () => {
               }
             />
           )}
-        </React.Fragment>
+      </React.Fragment>
+    );
+  };
+  
+  const drawConnections = () => {
+    return connections.map((connection, index) => {
+      const fromNode = nodes.find((node) => node.id === connection.from);
+      const toNode = nodes.find((node) => node.id === connection.to);
+  
+      if (!fromNode || !toNode) return null;
+  
+      return (
+        <DraggableLine
+          key={index}
+          connection={connection}
+          fromNode={fromNode}
+          toNode={toNode}
+        />
       );
     });
   };
-
+  
   return (
     <div className="bg-[beige] min-h-screen">
       <nav className="bg-[beige] bg-opacity-70 py-4 flex justify-center items-center w-[90rem] min-w-full">
