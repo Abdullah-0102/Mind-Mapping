@@ -39,7 +39,6 @@ const App = () => {
   const [parentNodeId, setParentNodeId] = React.useState(null);
   const [lastUndo, setLastUndo] = useState(null);
 
-
   // Save to history function
   const saveToHistory = (
     nodesToSave = nodes,
@@ -59,48 +58,46 @@ const App = () => {
   // Handle undo function
   const handleUndo = () => {
     if (historyIndex > 0) {
-        const currentState = {
-            nodes: [...nodes],
-            connections: [...connections],
-        };
-        setLastUndo(currentState); // Store current state before undoing
+      const currentState = {
+        nodes: [...nodes],
+        connections: [...connections],
+      };
+      setLastUndo(currentState); // Store current state before undoing
 
-        const previousState = history[historyIndex - 1];
-        setHistoryIndex(historyIndex - 1);
-        dispatch(setNodes(previousState.nodes));
-        dispatch(setConnections(previousState.connections));
+      const previousState = history[historyIndex - 1];
+      setHistoryIndex(historyIndex - 1);
+      dispatch(setNodes(previousState.nodes));
+      dispatch(setConnections(previousState.connections));
     }
-};
-
+  };
 
   // Handle redo function
   const handleRedo = () => {
     if (historyIndex < history.length - 1) {
-        const nextState = history[historyIndex + 1];
-        setHistoryIndex(historyIndex + 1);
-        dispatch(setNodes(nextState.nodes));
-        dispatch(setConnections(nextState.connections));
+      const nextState = history[historyIndex + 1];
+      setHistoryIndex(historyIndex + 1);
+      dispatch(setNodes(nextState.nodes));
+      dispatch(setConnections(nextState.connections));
 
-        setLastUndo(null); // Clear last undo since redo is performed
+      setLastUndo(null); // Clear last undo since redo is performed
 
-        console.log('Redo performed');
-        console.log('History Index after redo:', historyIndex);
-        console.log('Restored Nodes:', nextState.nodes);
-        console.log('Restored Connections:', nextState.connections);
+      console.log("Redo performed");
+      console.log("History Index after redo:", historyIndex);
+      console.log("Restored Nodes:", nextState.nodes);
+      console.log("Restored Connections:", nextState.connections);
     } else {
-        console.log('Redo not possible - history index out of bounds');
+      console.log("Redo not possible - history index out of bounds");
     }
-};
+  };
 
   const handleUndoLastUndo = () => {
     if (lastUndo) {
-        setHistoryIndex(historyIndex + 1);
-        dispatch(setNodes(lastUndo.nodes));
-        dispatch(setConnections(lastUndo.connections));
-        setLastUndo(null); // Clear last undo after performing the action
+      setHistoryIndex(historyIndex + 1);
+      dispatch(setNodes(lastUndo.nodes));
+      dispatch(setConnections(lastUndo.connections));
+      setLastUndo(null); // Clear last undo after performing the action
     }
-};
-
+  };
 
   React.useEffect(() => {
     // Save to history on initial load only once, when history is empty
@@ -169,7 +166,7 @@ const App = () => {
   const handleAddNode = () => {
     const newNodeId = `node${nodes.length + 1}`;
     let newX, newY, nodeColor;
-  
+
     // Check if this is the first node
     if (nodes.length === 0) {
       // Position the first node in the center of the screen
@@ -181,7 +178,7 @@ const App = () => {
       // Position the new node further away from the parent node
       newX = parentNode.x + (Math.random() - 0.5) * 300; // Increased distance
       newY = parentNode.y + parentNode.height + 100 + Math.random() * 50; // Increased distance
-  
+
       const parentNodeIsRoot = nodes[0] && nodes[0].id === parentNodeId;
       nodeColor = parentNodeIsRoot ? "green" : "#a89b32";
     } else {
@@ -189,7 +186,7 @@ const App = () => {
       newY = Math.random() * (window.innerHeight - 200) + 100;
       nodeColor = "blue";
     }
-  
+
     const newNode = {
       x: newX,
       y: newY,
@@ -200,9 +197,9 @@ const App = () => {
       text: nodeData.text,
       additionalText: nodeData.additionalText,
     };
-  
+
     dispatch(addNode(newNode));
-  
+
     // Calculate the control points for the connection line
     if (parentNodeId || selectedId) {
       const fromNode = nodes.find((n) => n.id === (parentNodeId || selectedId));
@@ -210,11 +207,11 @@ const App = () => {
       const initialY1 = fromNode.y + fromNode.height / 2;
       const initialX2 = newNode.x + newNode.width / 2;
       const initialY2 = newNode.y + newNode.height / 2;
-  
+
       // Adjust the control points to avoid line passing through the node
       const controlPointOffsetX = (initialX2 - initialX1) / 2;
       const controlPointOffsetY = (initialY2 - initialY1) / 2;
-  
+
       dispatch(
         addConnection({
           from: parentNodeId || selectedId,
@@ -232,17 +229,14 @@ const App = () => {
         })
       );
     }
-  
+
     saveToHistory();
-  
+
     selectShape(newNodeId);
     setModalIsOpen(false);
     setNodeData({ text: "", additionalText: "" });
     setParentNodeId(null);
   };
-  
-  
-  
 
   const handleEditNode = (nodeId) => {
     const node = nodes.find((n) => n.id === nodeId);
@@ -346,22 +340,22 @@ const App = () => {
 
   const handleDotDragEnd = (connection, newX, newY) => {
     const childNode = nodes.find((node) => node.id === connection.to);
-  
+
     const overlappingNode = nodes.find((node) => {
       if (node.id === childNode.id) return false;
-  
+
       const isOverlapping =
         newX > node.x &&
         newX < node.x + node.width &&
         newY > node.y &&
         newY < node.y + node.height;
-  
+
       return isOverlapping;
     });
-  
+
     if (overlappingNode) {
       dispatch(deleteConnection(connection.to)); // Remove old connection
-  
+
       // Update the connection to point to the new parent node
       dispatch(
         addConnection({
@@ -373,11 +367,11 @@ const App = () => {
           controlPoint2: connection.controlPoint2,
         })
       );
-  
+
       // Update the child node's position relative to the new parent
       const offsetX = Math.random() * 50 - 25;
       const offsetY = overlappingNode.height + 50 + Math.random() * 50;
-  
+
       const updatedChildNode = {
         ...childNode,
         x: overlappingNode.x + offsetX,
@@ -386,217 +380,222 @@ const App = () => {
       dispatch(updateNode(updatedChildNode));
     }
   };
-  
 
-const DraggableLine = ({ connection, fromNode, toNode }) => {
-  const [controlPoint1, setControlPoint1] = useState(
-    connection.controlPoint1 || calculateInitialControlPoint(fromNode, toNode, true)
-  );
-  const [controlPoint2, setControlPoint2] = useState(
-    connection.controlPoint2 || calculateInitialControlPoint(fromNode, toNode, false)
-  );
-
-  // Calculate initial control points
-  const calculateInitialControlPoint = (from, to, isFirst) => {
-    const fromX = from.x + from.width / 2;
-    const fromY = from.y + from.height / 2;
-    const toX = to.x + to.width / 2;
-    const toY = to.y + to.height / 2;
-
-    const deltaX = toX - fromX;
-    const deltaY = toY - fromY;
-
-    if (connection.type === "Angled Line") {
-      // For angled lines, the control point should be at the horizontal mid-point
-      const midX = fromX + deltaX * 0.5;
-      const midY = fromY; // Keep it at the same Y as the start point for horizontal control point
-      return { x: midX, y: midY };
-    } else {
-      return isFirst
-        ? {
-            x: fromX + deltaX * 0.25,
-            y: fromY - deltaY * 0.25,
-          }
-        : {
-            x: fromX + deltaX * 0.75,
-            y: fromY + deltaY * 0.75,
-          };
-    }
-  };
-
-  const handleDragEnd1 = (e) => {
-    const newControlPoint1 = { x: e.target.x(), y: e.target.y() };
-    setControlPoint1(newControlPoint1);
-
-    dispatch(
-      updateConnection({
-        ...connection,
-        controlPoint1: newControlPoint1,
-      })
+  const DraggableLine = ({ connection, fromNode, toNode }) => {
+    const [controlPoint1, setControlPoint1] = useState(
+      connection.controlPoint1 ||
+        calculateInitialControlPoint(fromNode, toNode, true)
     );
-  };
-
-  const handleDragEnd2 = (e) => {
-    const newControlPoint2 = { x: e.target.x(), y: e.target.y() };
-    setControlPoint2(newControlPoint2);
-
-    dispatch(
-      updateConnection({
-        ...connection,
-        controlPoint2: newControlPoint2,
-      })
+    const [controlPoint2, setControlPoint2] = useState(
+      connection.controlPoint2 ||
+        calculateInitialControlPoint(fromNode, toNode, false)
     );
-  };
 
-  const getPointsForLineType = () => {
-    const fromX = fromNode.x + fromNode.width / 2;
-    const fromY = fromNode.y + fromNode.height / 2;
-    const toX = toNode.x + toNode.width / 2;
-    const toY = toNode.y + toNode.height / 2;
+    // Calculate initial control points
+    const calculateInitialControlPoint = (from, to, isFirst) => {
+      const fromX = from.x + from.width / 2;
+      const fromY = from.y + from.height / 2;
+      const toX = to.x + to.width / 2;
+      const toY = to.y + to.height / 2;
 
-    const deltaX = toX - fromX;
-    const deltaY = toY - fromY;
-    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+      const deltaX = toX - fromX;
+      const deltaY = toY - fromY;
 
-    const offsetX = (deltaX / distance) * (fromNode.width / 2);
-    const offsetY = (deltaY / distance) * (fromNode.height / 2);
+      if (connection.type === "Angled Line") {
+        const midX = fromX + deltaX * 0.5;
+        const midY = fromY;
+        return { x: midX, y: midY };
+      } else {
+        return isFirst
+          ? { x: fromX + deltaX * 0.25, y: fromY - deltaY * 0.25 }
+          : { x: fromX + deltaX * 0.75, y: fromY + deltaY * 0.75 };
+      }
+    };
 
-    const adjustedFromX = fromX + offsetX;
-    const adjustedFromY = fromY + offsetY;
-    const adjustedToX = toX - offsetX;
-    const adjustedToY = toY - offsetY;
+    const handleDragEnd1 = (e) => {
+      const newControlPoint1 = { x: e.target.x(), y: e.target.y() };
+      setControlPoint1(newControlPoint1);
 
-    switch (connection.type) {
-      case "Straight Line":
-        return [adjustedFromX, adjustedFromY, adjustedToX, adjustedToY];
-      case "Curved Line":
-        return [
-          adjustedFromX, adjustedFromY,
-          controlPoint1.x, controlPoint1.y,
-          controlPoint2.x, controlPoint2.y,
-          adjustedToX, adjustedToY,
-        ];
-      case "Angled Line":
-        return [
-          adjustedFromX, adjustedFromY,
-          controlPoint1.x, adjustedFromY, // Ensure control point is on the line
-          controlPoint1.x, adjustedToY,
-          adjustedToX, adjustedToY,
-        ];
-      case "Rounded Line":
-        return [
-          adjustedFromX, adjustedFromY,
-          controlPoint1.x, controlPoint1.y,
-          controlPoint2.x, controlPoint2.y,
-          adjustedToX, adjustedToY,
-        ];
-      default:
-        return [];
-    }
-  };
+      dispatch(
+        updateConnection({
+          ...connection,
+          controlPoint1: newControlPoint1,
+        })
+      );
+    };
 
-  const points = getPointsForLineType();
-  const isSelected = selectedConnection === connection;
+    const handleDragEnd2 = (e) => {
+      const newControlPoint2 = { x: e.target.x(), y: e.target.y() };
+      setControlPoint2(newControlPoint2);
 
-  return (
-    <React.Fragment>
-      <Line
-        points={points}
-        stroke="#4A90E2"  // Light blue color for better visibility
-        strokeWidth={8}  // Adjusted line width
-        lineCap="round"
-        lineJoin="round"
-        shadowBlur={10}  // Enhanced shadow for depth
-        shadowColor="rgba(0, 0, 0, 0.3)"  // Darker shadow
-        tension={connection.type === "Curved Line" ? 0.5 : 0}
-        onClick={() => setSelectedConnection(connection)}
-        onDblClick={() => {
-          setSelectedConnection(connection);
-          setConnectionLabel(connection.label || "");
-          setLineType(connection.type);
-          setLabelModalIsOpen(true);
-        }}
-        onMouseEnter={(e) => {
-          const container = e.target.getStage().container();
-          container.style.cursor = "pointer";
-        }}
-        onMouseLeave={(e) => {
-          const container = e.target.getStage().container();
-          container.style.cursor = "default";
-        }}
-      />
-      {connection.label && (
-        <Text
-          text={connection.label}
-          x={(points[0] + points[points.length - 2]) / 2}
-          y={(points[1] + points[points.length - 1]) / 2 - 10}
-          fontSize={20}  // Increased font size for better visibility
-          fill="#333"  // Darker color for better contrast
-          align="center"
-          fontFamily="Arial"
-          fontStyle="bold"
-          shadowBlur={3}  // Slightly larger shadow for text
+      dispatch(
+        updateConnection({
+          ...connection,
+          controlPoint2: newControlPoint2,
+        })
+      );
+    };
+
+    const getPointsForLineType = () => {
+      const fromX = fromNode.x + fromNode.width / 2;
+      const fromY = fromNode.y + fromNode.height / 2;
+      const toX = toNode.x + toNode.width / 2;
+      const toY = toNode.y + toNode.height / 2;
+
+      const deltaX = toX - fromX;
+      const deltaY = toY - fromY;
+      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+      const offsetX = (deltaX / distance) * (fromNode.width / 2);
+      const offsetY = (deltaY / distance) * (fromNode.height / 2);
+
+      const adjustedFromX = fromX + offsetX;
+      const adjustedFromY = fromY + offsetY;
+      const adjustedToX = toX - offsetX;
+      const adjustedToY = toY - offsetY;
+
+      switch (connection.type) {
+        case "Straight Line":
+          return [adjustedFromX, adjustedFromY, adjustedToX, adjustedToY];
+        case "Curved Line":
+          return [
+            adjustedFromX,
+            adjustedFromY,
+            controlPoint1.x,
+            controlPoint1.y,
+            controlPoint2.x,
+            controlPoint2.y,
+            adjustedToX,
+            adjustedToY,
+          ];
+        case "Angled Line":
+          return [
+            adjustedFromX,
+            adjustedFromY,
+            controlPoint1.x,
+            adjustedFromY, // Ensure control point is on the line
+            controlPoint1.x,
+            adjustedToY,
+            adjustedToX,
+            adjustedToY,
+          ];
+        case "Rounded Line":
+          return [
+            adjustedFromX,
+            adjustedFromY,
+            controlPoint1.x,
+            controlPoint1.y,
+            controlPoint2.x,
+            controlPoint2.y,
+            adjustedToX,
+            adjustedToY,
+          ];
+        default:
+          return [];
+      }
+    };
+
+    const points = getPointsForLineType();
+    const isSelected = selectedConnection === connection;
+
+    return (
+      <React.Fragment>
+        <Line
+          points={points}
+          stroke="#4A90E2" // Light blue color for better visibility
+          strokeWidth={8} // Adjusted line width
+          lineCap="round"
+          lineJoin="round"
+          shadowBlur={10} // Enhanced shadow for depth
+          shadowColor="rgba(0, 0, 0, 0.3)" // Darker shadow
+          tension={connection.type === "Curved Line" ? 0.5 : 0}
+          onClick={() => setSelectedConnection(connection)}
+          onDblClick={() => {
+            setSelectedConnection(connection);
+            setConnectionLabel(connection.label || "");
+            setLineType(connection.type);
+            setLabelModalIsOpen(true);
+          }}
+          onMouseEnter={(e) => {
+            const container = e.target.getStage().container();
+            container.style.cursor = "pointer";
+          }}
+          onMouseLeave={(e) => {
+            const container = e.target.getStage().container();
+            container.style.cursor = "default";
+          }}
         />
-      )}
-      {isSelected && (
-        <Circle
-          x={points[0]}
-          y={points[1]}
-          radius={10}  // Larger circle for better visibility
-          fill="black"
-          draggable
-          onDragEnd={(e) =>
-            handleDotDragEnd(connection, e.target.x(), e.target.y())
-          }
-        />
-      )}
-
-      {/* Draggable Control Points */}
-      {isSelected && ["Curved Line", "Rounded Line", "Angled Line"].includes(connection.type) && (
-        <React.Fragment>
-          <Circle
-            x={controlPoint1.x}
-            y={controlPoint1.y}
-            radius={12}  // Slightly larger control point
-            fill="white"
-            stroke={connection.type === "Angled Line" ? "blue" : "blue"} // Blue for angled lines
-            strokeWidth={3}
-            draggable
-            shadowBlur={7}
-            shadowColor="rgba(0, 0, 0, 0.4)"
-            onDragEnd={handleDragEnd1}
+        {connection.label && (
+          <Text
+            text={connection.label}
+            x={(points[0] + points[points.length - 2]) / 2}
+            y={(points[1] + points[points.length - 1]) / 2 - 10}
+            fontSize={20} // Increased font size for better visibility
+            fill="#333" // Darker color for better contrast
+            align="center"
+            fontFamily="Arial"
+            fontStyle="bold"
+            shadowBlur={3} // Slightly larger shadow for text
           />
-          {connection.type !== "Angled Line" && (
-            <Circle
-              x={controlPoint2.x}
-              y={controlPoint2.y}
-              radius={12}
-              fill="white"
-              stroke="red"
-              strokeWidth={3}
-              draggable
-              shadowBlur={7}
-              shadowColor="rgba(0, 0, 0, 0.4)"
-              onDragEnd={handleDragEnd2}
-            />
+        )}
+        {isSelected && (
+          <Circle
+            x={points[0]}
+            y={points[1]}
+            radius={10} // Larger circle for better visibility
+            fill="black"
+            draggable
+            onDragEnd={(e) =>
+              handleDotDragEnd(connection, e.target.x(), e.target.y())
+            }
+          />
+        )}
+
+        {/* Draggable Control Points */}
+        {isSelected &&
+          ["Curved Line", "Rounded Line", "Angled Line"].includes(
+            connection.type
+          ) && (
+            <React.Fragment>
+              <Circle
+                x={controlPoint1.x}
+                y={controlPoint1.y}
+                radius={12} // Slightly larger control point
+                fill="white"
+                stroke={connection.type === "Angled Line" ? "blue" : "blue"} // Blue for angled lines
+                strokeWidth={3}
+                draggable
+                shadowBlur={7}
+                shadowColor="rgba(0, 0, 0, 0.4)"
+                onDragEnd={handleDragEnd1}
+              />
+              {connection.type !== "Angled Line" && (
+                <Circle
+                  x={controlPoint2.x}
+                  y={controlPoint2.y}
+                  radius={12}
+                  fill="white"
+                  stroke="red"
+                  strokeWidth={3}
+                  draggable
+                  shadowBlur={7}
+                  shadowColor="rgba(0, 0, 0, 0.4)"
+                  onDragEnd={handleDragEnd2}
+                />
+              )}
+            </React.Fragment>
           )}
-        </React.Fragment>
-      )}
-    </React.Fragment>
-  );
-};
+      </React.Fragment>
+    );
+  };
 
-
-  
-
-  
   const drawConnections = () => {
     return connections.map((connection, index) => {
       const fromNode = nodes.find((node) => node.id === connection.from);
       const toNode = nodes.find((node) => node.id === connection.to);
-  
+
       if (!fromNode || !toNode) return null;
-  
+
       return (
         <DraggableLine
           key={index}
@@ -607,7 +606,7 @@ const DraggableLine = ({ connection, fromNode, toNode }) => {
       );
     });
   };
-  
+
   return (
     <div className="bg-[beige] min-h-screen">
       <nav className="bg-[beige] bg-opacity-70 py-4 flex justify-center items-center w-[90rem] min-w-full">
@@ -639,7 +638,6 @@ const DraggableLine = ({ connection, fromNode, toNode }) => {
           >
             Redo
           </button>
-          
         </div>
 
         <Stage
