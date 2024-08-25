@@ -170,7 +170,13 @@ const App = () => {
     const newNodeId = `node${nodes.length + 1}`;
     let newX, newY, nodeColor;
   
-    if (parentNodeId) {
+    // Check if this is the first node
+    if (nodes.length === 0) {
+      // Position the first node in the center of the screen
+      newX = (window.innerWidth - 200) / 2;
+      newY = (window.innerHeight - 200) / 2;
+      nodeColor = "blue";
+    } else if (parentNodeId) {
       const parentNode = nodes.find((n) => n.id === parentNodeId);
       // Position the new node further away from the parent node
       newX = parentNode.x + (Math.random() - 0.5) * 300; // Increased distance
@@ -234,6 +240,7 @@ const App = () => {
     setNodeData({ text: "", additionalText: "" });
     setParentNodeId(null);
   };
+  
   
   
 
@@ -382,15 +389,40 @@ const App = () => {
   
 
 const DraggableLine = ({ connection, fromNode, toNode }) => {
-  const [controlPoint1, setControlPoint1] = useState(connection.controlPoint1 || {
-    x: (fromNode.x + toNode.x) / 2,
-    y: fromNode.y - 50,
-  });
+  const [controlPoint1, setControlPoint1] = useState(
+    connection.controlPoint1 || calculateInitialControlPoint(fromNode, toNode, true)
+  );
+  const [controlPoint2, setControlPoint2] = useState(
+    connection.controlPoint2 || calculateInitialControlPoint(fromNode, toNode, false)
+  );
 
-  const [controlPoint2, setControlPoint2] = useState(connection.controlPoint2 || {
-    x: (fromNode.x + toNode.x) / 2,
-    y: toNode.y + 50,
-  });
+  // Calculate initial control points
+  const calculateInitialControlPoint = (from, to, isFirst) => {
+    const fromX = from.x + from.width / 2;
+    const fromY = from.y + from.height / 2;
+    const toX = to.x + to.width / 2;
+    const toY = to.y + to.height / 2;
+
+    const deltaX = toX - fromX;
+    const deltaY = toY - fromY;
+
+    if (connection.type === "Angled Line") {
+      // For angled lines, the control point should be at the horizontal mid-point
+      const midX = fromX + deltaX * 0.5;
+      const midY = fromY; // Keep it at the same Y as the start point for horizontal control point
+      return { x: midX, y: midY };
+    } else {
+      return isFirst
+        ? {
+            x: fromX + deltaX * 0.25,
+            y: fromY - deltaY * 0.25,
+          }
+        : {
+            x: fromX + deltaX * 0.75,
+            y: fromY + deltaY * 0.75,
+          };
+    }
+  };
 
   const handleDragEnd1 = (e) => {
     const newControlPoint1 = { x: e.target.x(), y: e.target.y() };
@@ -447,7 +479,7 @@ const DraggableLine = ({ connection, fromNode, toNode }) => {
       case "Angled Line":
         return [
           adjustedFromX, adjustedFromY,
-          controlPoint1.x, adjustedFromY,
+          controlPoint1.x, adjustedFromY, // Ensure control point is on the line
           controlPoint1.x, adjustedToY,
           adjustedToX, adjustedToY,
         ];
@@ -471,11 +503,11 @@ const DraggableLine = ({ connection, fromNode, toNode }) => {
       <Line
         points={points}
         stroke="#4A90E2"  // Light blue color for better visibility
-        strokeWidth={10}  // Thicker lines
+        strokeWidth={8}  // Adjusted line width
         lineCap="round"
         lineJoin="round"
-        shadowBlur={5}  // Add a subtle shadow
-        shadowColor="rgba(0, 0, 0, 0.2)"  // Soft shadow for depth
+        shadowBlur={10}  // Enhanced shadow for depth
+        shadowColor="rgba(0, 0, 0, 0.3)"  // Darker shadow
         tension={connection.type === "Curved Line" ? 0.5 : 0}
         onClick={() => setSelectedConnection(connection)}
         onDblClick={() => {
@@ -498,12 +530,24 @@ const DraggableLine = ({ connection, fromNode, toNode }) => {
           text={connection.label}
           x={(points[0] + points[points.length - 2]) / 2}
           y={(points[1] + points[points.length - 1]) / 2 - 10}
-          fontSize={18}  // Slightly larger font for labels
+          fontSize={20}  // Increased font size for better visibility
           fill="#333"  // Darker color for better contrast
           align="center"
           fontFamily="Arial"
           fontStyle="bold"
-          shadowBlur={2}  // Slight shadow for text
+          shadowBlur={3}  // Slightly larger shadow for text
+        />
+      )}
+      {isSelected && (
+        <Circle
+          x={points[0]}
+          y={points[1]}
+          radius={10}  // Larger circle for better visibility
+          fill="black"
+          draggable
+          onDragEnd={(e) =>
+            handleDotDragEnd(connection, e.target.x(), e.target.y())
+          }
         />
       )}
 
@@ -513,32 +557,37 @@ const DraggableLine = ({ connection, fromNode, toNode }) => {
           <Circle
             x={controlPoint1.x}
             y={controlPoint1.y}
-            radius={10}  // Slightly larger control point
+            radius={12}  // Slightly larger control point
             fill="white"
-            stroke="blue"
-            strokeWidth={2}
+            stroke={connection.type === "Angled Line" ? "blue" : "blue"} // Blue for angled lines
+            strokeWidth={3}
             draggable
-            shadowBlur={5}
-            shadowColor="rgba(0, 0, 0, 0.3)"
+            shadowBlur={7}
+            shadowColor="rgba(0, 0, 0, 0.4)"
             onDragEnd={handleDragEnd1}
           />
-          <Circle
-            x={controlPoint2.x}
-            y={controlPoint2.y}
-            radius={10}
-            fill="white"
-            stroke="red"
-            strokeWidth={2}
-            draggable
-            shadowBlur={5}
-            shadowColor="rgba(0, 0, 0, 0.3)"
-            onDragEnd={handleDragEnd2}
-          />
+          {connection.type !== "Angled Line" && (
+            <Circle
+              x={controlPoint2.x}
+              y={controlPoint2.y}
+              radius={12}
+              fill="white"
+              stroke="red"
+              strokeWidth={3}
+              draggable
+              shadowBlur={7}
+              shadowColor="rgba(0, 0, 0, 0.4)"
+              onDragEnd={handleDragEnd2}
+            />
+          )}
         </React.Fragment>
       )}
     </React.Fragment>
   );
 };
+
+
+  
 
   
   const drawConnections = () => {
