@@ -11,8 +11,7 @@ const connectionsSlice = createSlice({
     },
     updateConnection: (state, action) => {
       const index = state.findIndex(
-        (conn) =>
-          conn.from === action.payload.from && conn.to === action.payload.to
+        (conn) => conn.from === action.payload.from && conn.to === action.payload.to
       );
       if (index !== -1) {
         state[index] = { ...state[index], ...action.payload };
