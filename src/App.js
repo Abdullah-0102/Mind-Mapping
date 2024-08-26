@@ -162,7 +162,40 @@ const App = () => {
     stage.position(newPos);
     stage.batchDraw();
   };
-
+  const isPanning = useRef(false);
+  const lastMousePos = useRef({ x: 0, y: 0 });
+  
+  const handleMouseDown = (e) => {
+    isPanning.current = true;
+    const stage = stageRef.current;
+    lastMousePos.current = {
+      x: e.evt.clientX - stage.x(),
+      y: e.evt.clientY - stage.y(),
+    };
+    const clickedOnEmpty = e.target === e.target.getStage();
+    if (clickedOnEmpty) {
+      selectShape(null);
+      setEditingNodeId(null);
+      setSelectedConnection(null);
+    }
+  };
+  
+  const handleMouseMove = (e) => {
+    if (!isPanning.current) return;
+  
+    const stage = stageRef.current;
+    const newPos = {
+      x: e.evt.clientX - lastMousePos.current.x,
+      y: e.evt.clientY - lastMousePos.current.y,
+    };
+    stage.position(newPos);
+    stage.batchDraw();
+  };
+  
+  const handleMouseUp = () => {
+    isPanning.current = false;
+  };
+  
   const handleAddNode = () => {
     const newNodeId = `node${nodes.length + 1}`;
     let newX, newY, nodeColor;
@@ -644,9 +677,13 @@ const App = () => {
           ref={stageRef}
           width={window.innerWidth}
           height={window.innerHeight - 200}
-          onMouseDown={checkDeselect}
+          // onMouseDown={checkDeselect}
           onTouchStart={checkDeselect}
           onWheel={handleZoom}
+          onMouseDown={handleMouseDown}
+  onMouseMove={handleMouseMove}
+  onMouseUp={handleMouseUp}
+
         >
           <Layer>
             {nodes.map((node, i) => {
