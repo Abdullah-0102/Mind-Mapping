@@ -415,25 +415,16 @@ const App = () => {
   };
 
   const DraggableLine = ({ connection, fromNode, toNode }) => {
-    const [controlPoint1, setControlPoint1] = useState(
-      connection.controlPoint1 ||
-        calculateInitialControlPoint(fromNode, toNode, true)
-    );
-    const [controlPoint2, setControlPoint2] = useState(
-      connection.controlPoint2 ||
-        calculateInitialControlPoint(fromNode, toNode, false)
-    );
-
     // Calculate initial control points
     const calculateInitialControlPoint = (from, to, isFirst) => {
       const fromX = from.x + from.width / 2;
       const fromY = from.y + from.height / 2;
       const toX = to.x + to.width / 2;
       const toY = to.y + to.height / 2;
-
+  
       const deltaX = toX - fromX;
       const deltaY = toY - fromY;
-
+  
       if (connection.type === "Angled Line") {
         const midX = fromX + deltaX * 0.5;
         const midY = fromY;
@@ -444,11 +435,20 @@ const App = () => {
           : { x: fromX + deltaX * 0.75, y: fromY + deltaY * 0.75 };
       }
     };
-
+  
+    const [controlPoint1, setControlPoint1] = useState(
+      connection.controlPoint1 ||
+        calculateInitialControlPoint(fromNode, toNode, true)
+    );
+    const [controlPoint2, setControlPoint2] = useState(
+      connection.controlPoint2 ||
+        calculateInitialControlPoint(fromNode, toNode, false)
+    );
+  
     const handleDragEnd1 = (e) => {
       const newControlPoint1 = { x: e.target.x(), y: e.target.y() };
       setControlPoint1(newControlPoint1);
-
+  
       dispatch(
         updateConnection({
           ...connection,
@@ -456,11 +456,11 @@ const App = () => {
         })
       );
     };
-
+  
     const handleDragEnd2 = (e) => {
       const newControlPoint2 = { x: e.target.x(), y: e.target.y() };
       setControlPoint2(newControlPoint2);
-
+  
       dispatch(
         updateConnection({
           ...connection,
@@ -468,25 +468,25 @@ const App = () => {
         })
       );
     };
-
+  
     const getPointsForLineType = () => {
       const fromX = fromNode.x + fromNode.width / 2;
       const fromY = fromNode.y + fromNode.height / 2;
       const toX = toNode.x + toNode.width / 2;
       const toY = toNode.y + toNode.height / 2;
-
+  
       const deltaX = toX - fromX;
       const deltaY = toY - fromY;
       const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
+  
       const offsetX = (deltaX / distance) * (fromNode.width / 2);
       const offsetY = (deltaY / distance) * (fromNode.height / 2);
-
+  
       const adjustedFromX = fromX + offsetX;
       const adjustedFromY = fromY + offsetY;
       const adjustedToX = toX - offsetX;
       const adjustedToY = toY - offsetY;
-
+  
       switch (connection.type) {
         case "Straight Line":
           return [adjustedFromX, adjustedFromY, adjustedToX, adjustedToY];
@@ -527,10 +527,10 @@ const App = () => {
           return [];
       }
     };
-
+  
     const points = getPointsForLineType();
     const isSelected = selectedConnection === connection;
-
+  
     return (
       <React.Fragment>
         <Line
@@ -583,7 +583,7 @@ const App = () => {
             }
           />
         )}
-
+  
         {/* Draggable Control Points */}
         {isSelected &&
           ["Curved Line", "Rounded Line", "Angled Line"].includes(
@@ -621,7 +621,7 @@ const App = () => {
       </React.Fragment>
     );
   };
-
+  
   const drawConnections = () => {
     return connections.map((connection, index) => {
       const fromNode = nodes.find((node) => node.id === connection.from);
