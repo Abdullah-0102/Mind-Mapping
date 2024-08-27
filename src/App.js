@@ -321,55 +321,56 @@ const App = () => {
     setConnectionLabel("");
   };
 
-  const handleDragEnd = (draggedNodeId, newX, newY) => {
-    const draggedNode = nodes.find((node) => node.id === draggedNodeId);
+const handleDragEnd = (draggedNodeId, newX, newY) => {
+  const draggedNode = nodes.find((node) => node.id === draggedNodeId);
 
-    const overlappingNode = nodes.find((node) => {
-      if (node.id === draggedNodeId) return false;
+  const overlappingNode = nodes.find((node) => {
+    if (node.id === draggedNodeId) return false;
 
-      const isOverlapping =
-        newX + draggedNode.width > node.x &&
-        newX < node.x + node.width &&
-        newY + draggedNode.height > node.y &&
-        newY < node.y + node.height;
+    const isOverlapping =
+      newX + draggedNode.width > node.x &&
+      newX < node.x + node.width &&
+      newY + draggedNode.height > node.y &&
+      newY < node.y + node.height;
 
-      return isOverlapping;
-    });
+    return isOverlapping;
+  });
 
-    if (overlappingNode) {
-      const offsetX =
-        Math.random() > 0.5
-          ? draggedNode.width + 20
-          : -(draggedNode.width + 20);
-      const offsetY =
-        Math.random() > 0.5
-          ? draggedNode.height + 20
-          : -(draggedNode.height + 20);
+  if (overlappingNode) {
+    const offsetX =
+      Math.random() > 0.5
+        ? draggedNode.width + 20
+        : -(draggedNode.width + 20);
+    const offsetY =
+      Math.random() > 0.5
+        ? draggedNode.height + 20
+        : -(draggedNode.height + 20);
 
-      const adjustedX = overlappingNode.x + offsetX;
-      const adjustedY = overlappingNode.y + offsetY;
+    const adjustedX = overlappingNode.x + offsetX;
+    const adjustedY = overlappingNode.y + offsetY;
 
-      const updatedNode = {
-        ...draggedNode,
-        x: adjustedX,
-        y: adjustedY,
-      };
+    const updatedNode = {
+      ...draggedNode,
+      x: adjustedX,
+      y: adjustedY,
+    };
 
-      dispatch(updateNode(updatedNode));
+    dispatch(updateNode(updatedNode));
 
-      dispatch(deleteConnection(draggedNode.id));
-      dispatch(
-        addConnection({
-          from: overlappingNode.id,
-          to: draggedNode.id,
-          type: lineType,
-          label: "",
-        })
-      );
-    } else {
-      dispatch(updateNode({ ...draggedNode, x: newX, y: newY }));
-    }
-  };
+    dispatch(deleteConnection(draggedNode.id));
+    dispatch(
+      addConnection({
+        from: overlappingNode.id,
+        to: draggedNode.id,
+        type: lineType,
+        label: "",
+      })
+    );
+  } else {
+    dispatch(updateNode({ ...draggedNode, x: newX, y: newY }));
+  }
+};
+
 
   const handleDotDragEnd = (connection, newX, newY) => {
     const childNode = nodes.find((node) => node.id === connection.to);
