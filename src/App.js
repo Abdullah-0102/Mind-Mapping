@@ -415,221 +415,222 @@ const handleDragEnd = (draggedNodeId, newX, newY) => {
     }
   };
 
-  const DraggableLine = ({ connection, fromNode, toNode }) => {
-    // Calculate initial control points
-    const calculateInitialControlPoint = (from, to, isFirst) => {
-      const fromX = from.x + from.width / 2;
-      const fromY = from.y + from.height / 2;
-      const toX = to.x + to.width / 2;
-      const toY = to.y + to.height / 2;
-  
-      const deltaX = toX - fromX;
-      const deltaY = toY - fromY;
-  
-      if (connection.type === "Angled Line") {
-        const midX = fromX + deltaX * 0.5;
-        const midY = fromY;
-        return { x: midX, y: midY };
-      } else {
-        return isFirst
-          ? { x: fromX + deltaX * 0.25, y: fromY - deltaY * 0.25 }
-          : { x: fromX + deltaX * 0.75, y: fromY + deltaY * 0.75 };
-      }
-    };
-  
-    const [controlPoint1, setControlPoint1] = useState(
-      connection.controlPoint1 ||
-        calculateInitialControlPoint(fromNode, toNode, true)
+const DraggableLine = ({ connection, fromNode, toNode }) => {
+  // Calculate initial control points
+  const calculateInitialControlPoint = (from, to, isFirst) => {
+    const fromX = from.x + from.width / 2;
+    const fromY = from.y + from.height / 2;
+    const toX = to.x + to.width / 2;
+    const toY = to.y + to.height / 2;
+
+    const deltaX = toX - fromX;
+    const deltaY = toY - fromY;
+
+    if (connection.type === "Angled Line") {
+      const midX = fromX + deltaX * 0.5;
+      const midY = fromY;
+      return { x: midX, y: midY };
+    } else {
+      return isFirst
+        ? { x: fromX + deltaX * 0.25, y: fromY - deltaY * 0.25 }
+        : { x: fromX + deltaX * 0.75, y: fromY + deltaY * 0.75 };
+    }
+  };
+
+  const [controlPoint1, setControlPoint1] = useState(
+    connection.controlPoint1 ||
+      calculateInitialControlPoint(fromNode, toNode, true)
+  );
+  const [controlPoint2, setControlPoint2] = useState(
+    connection.controlPoint2 ||
+      calculateInitialControlPoint(fromNode, toNode, false)
+  );
+
+  const handleDragEnd1 = (e) => {
+    const newControlPoint1 = { x: e.target.x(), y: e.target.y() };
+    setControlPoint1(newControlPoint1);
+
+    dispatch(
+      updateConnection({
+        ...connection,
+        controlPoint1: newControlPoint1,
+      })
     );
-    const [controlPoint2, setControlPoint2] = useState(
-      connection.controlPoint2 ||
-        calculateInitialControlPoint(fromNode, toNode, false)
+  };
+
+  const handleDragEnd2 = (e) => {
+    const newControlPoint2 = { x: e.target.x(), y: e.target.y() };
+    setControlPoint2(newControlPoint2);
+
+    dispatch(
+      updateConnection({
+        ...connection,
+        controlPoint2: newControlPoint2,
+      })
     );
-  
-    const handleDragEnd1 = (e) => {
-      const newControlPoint1 = { x: e.target.x(), y: e.target.y() };
-      setControlPoint1(newControlPoint1);
-  
-      dispatch(
-        updateConnection({
-          ...connection,
-          controlPoint1: newControlPoint1,
-        })
-      );
-    };
-  
-    const handleDragEnd2 = (e) => {
-      const newControlPoint2 = { x: e.target.x(), y: e.target.y() };
-      setControlPoint2(newControlPoint2);
-  
-      dispatch(
-        updateConnection({
-          ...connection,
-          controlPoint2: newControlPoint2,
-        })
-      );
-    };
-  
-    const getPointsForLineType = () => {
-      const fromX = fromNode.x + fromNode.width / 2;
-      const fromY = fromNode.y + fromNode.height / 2;
-      const toX = toNode.x + toNode.width / 2;
-      const toY = toNode.y + toNode.height / 2;
-  
-      const deltaX = toX - fromX;
-      const deltaY = toY - fromY;
-      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-  
-      const offsetX = (deltaX / distance) * (fromNode.width / 2);
-      const offsetY = (deltaY / distance) * (fromNode.height / 2);
-  
-      const adjustedFromX = fromX + offsetX;
-      const adjustedFromY = fromY + offsetY;
-      const adjustedToX = toX - offsetX;
-      const adjustedToY = toY - offsetY;
-  
-      switch (connection.type) {
-        case "Straight Line":
-          return [adjustedFromX, adjustedFromY, adjustedToX, adjustedToY];
-        case "Curved Line":
-          return [
-            adjustedFromX,
-            adjustedFromY,
-            controlPoint1.x,
-            controlPoint1.y,
-            controlPoint2.x,
-            controlPoint2.y,
-            adjustedToX,
-            adjustedToY,
-          ];
-        case "Angled Line":
-          return [
-            adjustedFromX,
-            adjustedFromY,
-            controlPoint1.x,
-            adjustedFromY, // Ensure control point is on the line
-            controlPoint1.x,
-            adjustedToY,
-            adjustedToX,
-            adjustedToY,
-          ];
-        case "Rounded Line":
-          return [
-            adjustedFromX,
-            adjustedFromY,
-            controlPoint1.x,
-            controlPoint1.y,
-            controlPoint2.x,
-            controlPoint2.y,
-            adjustedToX,
-            adjustedToY,
-          ];
-        default:
-          return [];
-      }
-    };
-  
-    const points = getPointsForLineType();
-    const isSelected = selectedConnection === connection;
-  
-    return (
-      <React.Fragment>
-        <Line
-          points={points}
-          stroke="#4A90E2" // Light blue color for better visibility
-          strokeWidth={8} // Adjusted line width
-          lineCap="round"
-          lineJoin="round"
-          shadowBlur={10} // Enhanced shadow for depth
-          shadowColor="rgba(0, 0, 0, 0.3)" // Darker shadow
-          tension={connection.type === "Curved Line" ? 0.5 : 0}
-          onClick={() => setSelectedConnection(connection)}
-          onDblClick={() => {
-            setSelectedConnection(connection);
-            setConnectionLabel(connection.label || "");
-            setLineType(connection.type);
-            setLabelModalIsOpen(true);
-          }}
-          onMouseEnter={(e) => {
-            const container = e.target.getStage().container();
-            container.style.cursor = "pointer";
-          }}
-          onMouseLeave={(e) => {
-            const container = e.target.getStage().container();
-            container.style.cursor = "default";
-          }}
+  };
+
+  const getPointsForLineType = () => {
+    const fromX = fromNode.x + fromNode.width / 2;
+    const fromY = fromNode.y + fromNode.height / 2;
+    const toX = toNode.x + toNode.width / 2;
+    const toY = toNode.y + toNode.height / 2;
+
+    const deltaX = toX - fromX;
+    const deltaY = toY - fromY;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+    const offsetX = (deltaX / distance) * (fromNode.width / 2);
+    const offsetY = (deltaY / distance) * (fromNode.height / 2);
+
+    const adjustedFromX = fromX + offsetX;
+    const adjustedFromY = fromY + offsetY;
+    const adjustedToX = toX - offsetX;
+    const adjustedToY = toY - offsetY;
+
+    switch (connection.type) {
+      case "Straight Line":
+        return [adjustedFromX, adjustedFromY, adjustedToX, adjustedToY];
+      case "Curved Line":
+      case "Rounded Line":
+        return [
+          adjustedFromX,
+          adjustedFromY,
+          controlPoint1.x,
+          controlPoint1.y,
+          controlPoint2.x,
+          controlPoint2.y,
+          adjustedToX,
+          adjustedToY,
+        ];
+      case "Angled Line":
+        return [
+          adjustedFromX,
+          adjustedFromY,
+          controlPoint1.x,
+          adjustedFromY, // Ensure control point is on the line
+          controlPoint1.x,
+          adjustedToY,
+          adjustedToX,
+          adjustedToY,
+        ];
+      default:
+        return [];
+    }
+  };
+
+  const points = getPointsForLineType();
+  const isSelected = selectedConnection === connection;
+
+  return (
+    <React.Fragment>
+      <Line
+        points={points}
+        stroke="#4A90E2" // Light blue color for better visibility
+        strokeWidth={8} // Adjusted line width
+        lineCap="round"
+        lineJoin="round"
+        shadowBlur={10} // Enhanced shadow for depth
+        shadowColor="rgba(0, 0, 0, 0.3)" // Darker shadow
+        tension={connection.type === "Curved Line" ? 0.5 : 0}
+        onClick={() => setSelectedConnection(connection)}
+        onDblClick={() => {
+          setSelectedConnection(connection);
+          setConnectionLabel(connection.label || "");
+          setLineType(connection.type);
+          setLabelModalIsOpen(true);
+        }}
+        onMouseEnter={(e) => {
+          const container = e.target.getStage().container();
+          container.style.cursor = "pointer";
+        }}
+        onMouseLeave={(e) => {
+          const container = e.target.getStage().container();
+          container.style.cursor = "default";
+        }}
+      />
+      {connection.label && (
+        <Text
+          text={connection.label}
+          x={(points[0] + points[points.length - 2]) / 2}
+          y={(points[1] + points[points.length - 1]) / 2 - 10}
+          fontSize={20} // Increased font size for better visibility
+          fill="#333" // Darker color for better contrast
+          align="center"
+          fontFamily="Arial"
+          fontStyle="bold"
+          shadowBlur={3} // Slightly larger shadow for text
         />
-        {connection.label && (
-          <Text
-            text={connection.label}
-            x={(points[0] + points[points.length - 2]) / 2}
-            y={(points[1] + points[points.length - 1]) / 2 - 10}
-            fontSize={20} // Increased font size for better visibility
-            fill="#333" // Darker color for better contrast
-            align="center"
-            fontFamily="Arial"
-            fontStyle="bold"
-            shadowBlur={3} // Slightly larger shadow for text
-          />
-        )}
-        {isSelected && (
-          <Circle
-            x={points[0]}
-            y={points[1]}
-            radius={10} // Larger circle for better visibility
-            fill="black"
-            draggable
-            onDragEnd={(e) =>
-              handleDotDragEnd(connection, e.target.x(), e.target.y())
-            }
-          />
-        )}
-  
-        {/* Draggable Control Points */}
-        {isSelected &&
-          ["Curved Line", "Rounded Line", "Angled Line"].includes(
-            connection.type
-          ) && (
-            <React.Fragment>
+      )}
+      {isSelected && (
+        <Circle
+          x={points[0]}
+          y={points[1]}
+          radius={10} // Larger circle for better visibility
+          fill="black"
+          draggable
+          onDragEnd={(e) =>
+            handleDotDragEnd(connection, e.target.x(), e.target.y())
+          }
+        />
+      )}
+
+      {/* Draggable Control Points */}
+      {isSelected &&
+        ["Curved Line", "Rounded Line", "Angled Line"].includes(
+          connection.type
+        ) && (
+          <React.Fragment>
+            <Circle
+              x={controlPoint1.x}
+              y={controlPoint1.y}
+              radius={12} // Slightly larger control point
+              fill="white"
+              stroke={connection.type === "Angled Line" ? "blue" : "blue"} // Blue for angled lines
+              strokeWidth={3}
+              draggable
+              shadowBlur={7}
+              shadowColor="rgba(0, 0, 0, 0.4)"
+              onDragEnd={handleDragEnd1}
+              onDragMove={(e) => {
+                // Update control point during drag
+                const newControlPoint1 = { x: e.target.x(), y: e.target.y() };
+                setControlPoint1(newControlPoint1);
+              }}
+            />
+            {connection.type !== "Angled Line" && (
               <Circle
-                x={controlPoint1.x}
-                y={controlPoint1.y}
-                radius={12} // Slightly larger control point
+                x={controlPoint2.x}
+                y={controlPoint2.y}
+                radius={12}
                 fill="white"
-                stroke={connection.type === "Angled Line" ? "blue" : "blue"} // Blue for angled lines
+                stroke="red"
                 strokeWidth={3}
                 draggable
                 shadowBlur={7}
                 shadowColor="rgba(0, 0, 0, 0.4)"
-                onDragEnd={handleDragEnd1}
+                onDragEnd={handleDragEnd2}
+                onDragMove={(e) => {
+                  // Update control point during drag
+                  const newControlPoint2 = { x: e.target.x(), y: e.target.y() };
+                  setControlPoint2(newControlPoint2);
+                }}
               />
-              {connection.type !== "Angled Line" && (
-                <Circle
-                  x={controlPoint2.x}
-                  y={controlPoint2.y}
-                  radius={12}
-                  fill="white"
-                  stroke="red"
-                  strokeWidth={3}
-                  draggable
-                  shadowBlur={7}
-                  shadowColor="rgba(0, 0, 0, 0.4)"
-                  onDragEnd={handleDragEnd2}
-                />
-              )}
-            </React.Fragment>
-          )}
-      </React.Fragment>
-    );
-  };
+            )}
+          </React.Fragment>
+        )}
+    </React.Fragment>
+  );
+};
+
   
   const drawConnections = () => {
     return connections.map((connection, index) => {
       const fromNode = nodes.find((node) => node.id === connection.from);
       const toNode = nodes.find((node) => node.id === connection.to);
-
+  
       if (!fromNode || !toNode) return null;
-
+  
       return (
         <DraggableLine
           key={index}
@@ -640,6 +641,7 @@ const handleDragEnd = (draggedNodeId, newX, newY) => {
       );
     });
   };
+  
 
   return (
     <div className="bg-[beige] min-h-screen">
