@@ -428,7 +428,6 @@ const App = () => {
   };
 
 const DraggableLine = ({ connection, fromNode, toNode }) => {
-  // Calculate initial control points
   const calculateInitialControlPoint = (from, to, isFirst) => {
     const fromX = from.x + from.width / 2;
     const fromY = from.y + from.height / 2;
@@ -440,8 +439,13 @@ const DraggableLine = ({ connection, fromNode, toNode }) => {
 
     if (connection.type === "Angled Line") {
       const midX = fromX + deltaX * 0.5;
-      const midY = fromY;
+      const midY = fromY ;
       return { x: midX, y: midY };
+    } else if (connection.type === "Rounded Line") {
+      const controlOffset = Math.min(Math.abs(deltaX), Math.abs(deltaY)) * 0.3;
+      return isFirst
+        ? { x: fromX + controlOffset, y: fromY }
+        : { x: toX - controlOffset, y: toY };
     } else {
       return isFirst
         ? { x: fromX + deltaX * 0.25, y: fromY - deltaY * 0.25 }
@@ -520,7 +524,7 @@ const DraggableLine = ({ connection, fromNode, toNode }) => {
           adjustedFromX,
           adjustedFromY,
           controlPoint1.x,
-          adjustedFromY, // Ensure control point is on the line
+          adjustedFromY,
           controlPoint1.x,
           adjustedToY,
           adjustedToX,
@@ -538,12 +542,12 @@ const DraggableLine = ({ connection, fromNode, toNode }) => {
     <React.Fragment>
       <Line
         points={points}
-        stroke="#4A90E2" // Light blue color for better visibility
-        strokeWidth={8} // Adjusted line width
+        stroke="#4A90E2"
+        strokeWidth={10}
         lineCap="round"
         lineJoin="round"
-        shadowBlur={10} // Enhanced shadow for depth
-        shadowColor="rgba(0, 0, 0, 0.3)" // Darker shadow
+        shadowBlur={10}
+        shadowColor="rgba(0, 0, 0, 0.3)"
         tension={connection.type === "Curved Line" ? 0.5 : 0}
         onClick={() => setSelectedConnection(connection)}
         onDblClick={() => {
@@ -566,19 +570,19 @@ const DraggableLine = ({ connection, fromNode, toNode }) => {
           text={connection.label}
           x={(points[0] + points[points.length - 2]) / 2}
           y={(points[1] + points[points.length - 1]) / 2 - 10}
-          fontSize={20} // Increased font size for better visibility
-          fill="#333" // Darker color for better contrast
+          fontSize={20}
+          fill="#333"
           align="center"
           fontFamily="Arial"
           fontStyle="bold"
-          shadowBlur={3} // Slightly larger shadow for text
+          shadowBlur={3}
         />
       )}
       {isSelected && (
         <Circle
           x={points[0]}
           y={points[1]}
-          radius={10} // Larger circle for better visibility
+          radius={12}
           fill="black"
           draggable
           onDragEnd={(e) =>
@@ -587,7 +591,6 @@ const DraggableLine = ({ connection, fromNode, toNode }) => {
         />
       )}
 
-      {/* Draggable Control Points */}
       {isSelected &&
         ["Curved Line", "Rounded Line", "Angled Line"].includes(
           connection.type
@@ -596,16 +599,15 @@ const DraggableLine = ({ connection, fromNode, toNode }) => {
             <Circle
               x={controlPoint1.x}
               y={controlPoint1.y}
-              radius={12} // Slightly larger control point
-              fill="white"
-              stroke={connection.type === "Angled Line" ? "blue" : "blue"} // Blue for angled lines
+              radius={10}
+              fill="#ADD8E6"
+              stroke={connection.type === "Angled Line" ? "blue" : "blue"}
               strokeWidth={3}
               draggable
               shadowBlur={7}
               shadowColor="rgba(0, 0, 0, 0.4)"
               onDragEnd={handleDragEnd1}
               onDragMove={(e) => {
-                // Update control point during drag
                 const newControlPoint1 = { x: e.target.x(), y: e.target.y() };
                 setControlPoint1(newControlPoint1);
               }}
@@ -614,16 +616,15 @@ const DraggableLine = ({ connection, fromNode, toNode }) => {
               <Circle
                 x={controlPoint2.x}
                 y={controlPoint2.y}
-                radius={12}
-                fill="white"
-                stroke="red"
+                radius={10}
+                fill="#ADD8E6"
+                stroke="blue"
                 strokeWidth={3}
                 draggable
                 shadowBlur={7}
                 shadowColor="rgba(0, 0, 0, 0.4)"
                 onDragEnd={handleDragEnd2}
                 onDragMove={(e) => {
-                  // Update control point during drag
                   const newControlPoint2 = { x: e.target.x(), y: e.target.y() };
                   setControlPoint2(newControlPoint2);
                 }}
@@ -634,6 +635,8 @@ const DraggableLine = ({ connection, fromNode, toNode }) => {
     </React.Fragment>
   );
 };
+
+  
 
   
   const drawConnections = () => {
